@@ -65,11 +65,13 @@
   color: #1E8449;
 }
 
-/* Keep button in top-right even when collapsed */
+/* Center button horizontally when sidebar is collapsed */
 .ant-layout-sider-collapsed .collapse-button {
   position: absolute;
   top: 4px;
-  right: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  right: auto;
 }
 
 /* Adjust logo container padding when collapsed for better centering */
