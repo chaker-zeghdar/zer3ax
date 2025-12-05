@@ -458,8 +458,8 @@ def answer_question(question: str) -> str:
                     resp.append(f"✅ {p2['commonName']} has higher yield\n")
                 return "".join(resp)
     
-    # BETTER/WHICH QUESTIONS
-    if "better" in q or ("which" in q and ("one" in q or "is" in q)):
+    # BETTER/WHICH QUESTIONS (+ Algerian: lel = for)
+    if "better" in q or ("which" in q and ("one" in q or "is" in q)) or (any(w in q for w in ["a7san", "khir"]) and any(w in q for w in ["lel", "l", "pour"])):
         # Extract target trait or plant
         if kw["plants"]:
             # "which one is better for corn" - means compare FOR corn (corn production/crossing)
