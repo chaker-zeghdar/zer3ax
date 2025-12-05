@@ -124,7 +124,7 @@ const AppLayout = ({ children }) => {
             </div>
             {!collapsed && <p className="tagline">AI Plant Breeding</p>}
           </div>
-
+          
           <Menu
             theme="light"
             mode="inline"

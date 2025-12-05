@@ -104,10 +104,57 @@
 
 .filter-group select {
   flex: 1;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #E1E8ED;
+  border-radius: 10px;
   font-size: 1rem;
+  background-color: white;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  appearance: none;
+  text-align: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2327AE60' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px 8px;
+  padding-right: 2.5rem;
+}
+
+.filter-group select:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.15);
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 2px 12px rgba(39, 174, 96, 0.2);
+}
+
+.filter-group select option {
+  padding: 0.75rem 1rem;
+  background-color: white;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.6;
+  text-align: center;
+  accent-color: #27AE60;
+  transition: all 0.3s ease;
+}
+
+.filter-group select option:hover {
+  background: linear-gradient(135deg, #E8F8F0 0%, #D4EFDF 100%) !important;
+  background-color: #E8F8F0 !important;
+  color: var(--text-primary) !important;
+}
+
+.filter-group select option:checked {
+  background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%) !important;
+  background-color: #27AE60 !important;
+  color: white !important;
+  font-weight: 600;
 }
 
 .ranking-table-container {
