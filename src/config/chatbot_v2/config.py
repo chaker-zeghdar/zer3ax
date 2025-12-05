@@ -11,10 +11,10 @@ from typing import Dict, Any
 # ========================================
 
 # Your API Key - Replace with your actual key
-API_KEY = os.getenv("CHATBOT_API_KEY", "your-api-key-here")
+API_KEY = os.getenv("CHATBOT_API_KEY", "AIzaSyD1sB4FJqCSLu1sCdnmEcyAEsMxJV80jPw")
 
 # Which AI service to use: "claude", "gemini", "openai"
-AI_SERVICE = "claude"  # Change this to your preferred service
+AI_SERVICE = "gemini"  # Using Google Gemini
 
 # Model configuration
 MODELS = {
@@ -24,7 +24,7 @@ MODELS = {
         "temperature": 0.7,
     },
     "gemini": {
-        "model_name": "gemini-2.0-flash-exp",
+        "model_name": "gemini-1.5-pro",
         "max_tokens": 2048,
         "temperature": 0.7,
     },
