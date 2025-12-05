@@ -182,13 +182,13 @@ def extract_keywords(question: str) -> Dict:
     """Extract keywords from question - works with ANY language and even single words"""
     q = question.lower()
     
-    # Plant name aliases for better recognition
+    # Plant name aliases for better recognition (including Algerian dialect)
     PLANT_ALIASES = {
-        "wheat": ["wheat", "blé", "قمح", "bread wheat", "durum wheat"],
-        "barley": ["barley", "orge", "شعير"],
-        "corn": ["corn", "maize", "maïs", "ذرة", "zea"],
-        "sorghum": ["sorghum", "sorgo", "ذرة رفيعة", "millet"],
-        "alfalfa": ["alfalfa", "luzerne", "فصة", "lucerne"]
+        "wheat": ["wheat", "blé", "قمح", "bread wheat", "durum wheat", "kamh", "el kamh", "قمح الصلب"],
+        "barley": ["barley", "orge", "شعير", "ch3ir", "el ch3ir", "chaîr"],
+        "corn": ["corn", "maize", "maïs", "ذرة", "zea", "dra", "el dra", "درا"],
+        "sorghum": ["sorghum", "sorgo", "ذرة رفيعة", "millet", "draa", "el draa"],
+        "alfalfa": ["alfalfa", "luzerne", "فصة", "lucerne", "fsa", "el fsa", "fessa", "الفصة"]
     }
     
     # Extract plant names (more flexible matching - works with partial names)
@@ -214,58 +214,61 @@ def extract_keywords(question: str) -> Dict:
     # Remove duplicates
     plants = list(dict.fromkeys(plants))
     
-    # Extract zones (multi-language)
+    # Extract zones (multi-language + Algerian dialect)
     zones = []
-    if any(w in q for w in ["northern", "north", "coastal", "nord", "côtier", "شمال"]):
+    if any(w in q for w in ["northern", "north", "coastal", "nord", "côtier", "شمال", "chamal", "ch3mal", "tell", "sahel"]):
         zones.append("Northern")
-    if any(w in q for w in ["plateau", "high plateau", "hauts plateaux", "الهضاب"]):
+    if any(w in q for w in ["plateau", "high plateau", "hauts plateaux", "الهضاب", "hadhab", "h'dhab", "hdhab"]):
         zones.append("High Plateau")
-    if any(w in q for w in ["sahara", "southern", "south", "desert", "sud", "صحراء", "جنوب"]):
+    if any(w in q for w in ["sahara", "southern", "south", "desert", "sud", "صحراء", "جنوب", "sahra", "s7ara", "jnoub"]):
         zones.append("Sahara")
     
-    # Extract traits (multi-language)
+    # Extract traits (multi-language + Algerian dialect)
     traits = []
     trait_keywords = {
-        "drought": ["drought", "dry", "sécheresse", "sec", "جفاف"],
-        "salinity": ["salinity", "salt", "salinité", "sel", "ملوحة"],
-        "disease": ["disease", "resistance", "maladie", "résistance", "مرض", "مقاومة"],
-        "yield": ["yield", "production", "rendement", "إنتاج"],
-        "genome": ["genome", "génome", "جينوم"],
-        "rainfall": ["rain", "rainfall", "pluie", "précipitation", "أمطار"],
-        "temperature": ["temperature", "temp", "température", "حرارة"]
+        "drought": ["drought", "dry", "sécheresse", "sec", "جفاف", "jfaf", "ybes", "9e7t", "laq7at", "kanch"],
+        "salinity": ["salinity", "salt", "salinité", "sel", "ملوحة", "mel7", "lmel7", "salti"],
+        "disease": ["disease", "resistance", "maladie", "résistance", "مرض", "مقاومة", "mradh", "lmradh", "mouqawama"],
+        "yield": ["yield", "production", "rendement", "إنتاج", "intaj", "production", "mrdoud", "rendement"],
+        "genome": ["genome", "génome", "جينوم", "jinoum", "genes"],
+        "rainfall": ["rain", "rainfall", "pluie", "précipitation", "أمطار", "chta", "chtaa", "el chta", "lmtar"],
+        "temperature": ["temperature", "temp", "température", "حرارة", "s5ana", "broudh", "darja"]
     }
     
     for trait, keywords in trait_keywords.items():
         if any(kw in q for kw in keywords):
             traits.append(trait)
     
-    # Detect breeding/hybridization intent
+    # Detect breeding/hybridization intent (+ Algerian dialect)
     breeding_keywords = ["hybrid", "cross", "breed", "hybridization", "croisement", "تهجين", 
                         "genetics", "inherit", "gene", "chromosome", "mendel", "f1", "f2",
-                        "pollination", "compatibility", "backcross", "marker"]
+                        "pollination", "compatibility", "backcross", "marker",
+                        "tahdjin", "tahjin", "khalit", "5alit", "mix", "tazwij", "t'zwij"]
     is_breeding_question = any(kw in q for kw in breeding_keywords)
     
-    # Detect question type (multi-language intent detection)
+    # Detect question type (multi-language + Algerian dialect)
     qtype = "general"
     
-    # Recommendation
-    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح"]):
+    # Recommendation (+ Algerian: a7san, khir, nsah)
+    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح", "a7san", "khir", "khayr", "nsah", "nsi7a"]):
         qtype = "recommendation"
     
-    # Ranking
-    elif any(w in q for w in ["rank", "ranking", "position", "classement", "ترتيب"]):
+    # Ranking (+ Algerian: tartib, classement)
+    elif any(w in q for w in ["rank", "ranking", "position", "classement", "ترتيب", "tartib", "mertba"]):
         qtype = "ranking"
     
-    # Comparison
-    elif any(w in q for w in ["compare", "vs", "versus", "comparer", "مقارنة"]):
+    # Comparison (+ Algerian: 9arn, compare)
+    elif any(w in q for w in ["compare", "vs", "versus", "comparer", "مقارنة", "9arn", "qarn", "mouqarana"]):
         qtype = "comparison"
     
-    # What/Tell/Info questions
-    elif any(w in q for w in ["what", "tell", "about", "info", "describe", "qu'est", "quoi", "ماذا", "ما هو"]):
+    # What/Tell/Info questions (+ Algerian: wach, chkoun, kifech, 3lach)
+    elif any(w in q for w in ["what", "tell", "about", "info", "describe", "qu'est", "quoi", "ماذا", "ما هو", 
+                               "wach", "wash", "chkoun", "shkoun", "kifech", "kifach", "3lach", "3lah"]):
         qtype = "what"
     
-    # Characteristics
-    elif any(w in q for w in ["characteristic", "trait", "property", "caractéristique", "propriété", "خصائص"]):
+    # Characteristics (+ Algerian: khasa2is, sfat)
+    elif any(w in q for w in ["characteristic", "trait", "property", "caractéristique", "propriété", "خصائص", 
+                               "khasa2is", "khasa'is", "sfat", "sifat"]):
         qtype = "characteristics"
     
     # Single word handling - if just a plant name or trait
