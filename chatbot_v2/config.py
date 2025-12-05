@@ -11,10 +11,10 @@ from typing import Dict, Any
 # ========================================
 
 # Your API Key - Replace with your actual key
-API_KEY = os.getenv("CHATBOT_API_KEY", "AIzaSyD1sB4FJqCSLu1sCdnmEcyAEsMxJV80jPw")
+API_KEY = os.getenv("CHATBOT_API_KEY", "your-api-key-here")
 
 # Which AI service to use: "claude", "gemini", "openai"
-AI_SERVICE = "gemini"  # Using Google Gemini
+AI_SERVICE = "claude"  # Change this to your preferred service
 
 # Model configuration
 MODELS = {
@@ -24,7 +24,7 @@ MODELS = {
         "temperature": 0.7,
     },
     "gemini": {
-        "model_name": "gemini-1.5-pro",
+        "model_name": "gemini-2.0-flash-exp",
         "max_tokens": 2048,
         "temperature": 0.7,
     },
@@ -39,29 +39,22 @@ MODELS = {
 # SYSTEM PROMPT
 # ========================================
 
-SYSTEM_PROMPT = """You are an intelligent Plant Breeding AI Assistant with access to comprehensive plant data.
+SYSTEM_PROMPT = """You are a helpful AI assistant.
 
-Your approach:
-1. Extract keywords from user questions (plant names, zones, traits)
-2. Use the answer_question tool to find relevant data
-3. Provide clear, data-driven answers
+YOUR ROLE:
+- Answer questions clearly and concisely
+- Provide accurate, helpful information
+- Be professional and friendly
 
-You have data on:
-- 6 plant species (Bread Wheat, Barley, Corn, Sorghum, Durum Wheat, Alfalfa)
-- 3 Algeria zones (Northern, High Plateau, Sahara)
-- Traits: drought resistance, salinity, disease, yield, genome size, rainfall, temperature
+YOUR CAPABILITIES:
+- General knowledge and conversation
+- Problem-solving and analysis
+- Information retrieval and explanation
 
-ANSWER ANY QUESTION by:
-- Identifying keywords in the question
-- Matching keywords to available data
-- Providing specific numbers and details from the database
-
-EXAMPLES:
-"What is the drought resistance of wheat?" → Extract 'wheat' and 'drought', return data
-"Best plants for Sahara?" → Extract 'Sahara', return recommended plants
-"Which plant has highest yield?" → Rank by yield, return top plant
-
-ALWAYS use specific data, numbers, and details from the database.
+RESPONSE STYLE:
+- Clear and well-structured
+- Use examples when helpful
+- Be concise but thorough
 """
 
 # ========================================
@@ -96,9 +89,9 @@ TOOLS = [
 # ========================================
 
 SETTINGS = {
-    "chat_history_limit": 100,  # Max messages to keep in history
+    "chat_history_limit": 10,  # Max messages to keep in history
     "streaming": False,  # Enable streaming responses
-    "enable_tools": True,  # Enable tool/function calling (ENABLED FOR KEYWORD-BASED Q&A)
+    "enable_tools": False,  # Enable tool/function calling
     "debug_mode": True,  # Print debug information
 }
 
