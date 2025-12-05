@@ -107,21 +107,21 @@ const AppLayout = ({ children }) => {
           }}
         >
           <div className="logo-container">
-            <div className="logo">
-              <img 
-                src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/document-uploads/ChatGPT-Image-Dec-5-2025-01_03_42-AM-1764902702190.png?width=8000&height=8000&resize=contain" 
-                alt="Zer3aZ Logo" 
-                className="logo-image"
-              />
-              {!collapsed && <span className="logo-text">Zer3aZ</span>}
-            </div>
-            {!collapsed && <p className="tagline">AI Plant Breeding</p>}
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed(!collapsed)}
               className="collapse-button"
             />
+            <div className="logo">
+              <img 
+                src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/document-uploads/ChatGPT_Image_Dec_5__2025__01_03_42_AM-removebg-preview-1764904344983.png?width=8000&height=8000&resize=contain" 
+                alt="Zer3aZ Logo" 
+                className="logo-image"
+              />
+              {!collapsed && <span className="logo-text">Zer3aZ</span>}
+            </div>
+            {!collapsed && <p className="tagline">AI Plant Breeding</p>}
           </div>
 
           <Menu

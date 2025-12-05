@@ -1,6 +1,6 @@
 /* Logo Container */
 .logo-container {
-  padding: 12px 24px 16px 24px;
+  padding: 8px 16px;
   text-align: center;
   border-bottom: 1px solid #E1E8ED;
   background: linear-gradient(135deg, #E8F8F0 0%, #D4EFDF 100%);
@@ -38,30 +38,30 @@
 
 .collapse-button {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #27AE60;
-  border: 1px solid #E1E8ED;
+  border: none;
   border-radius: 6px;
-  background: #FFFFFF;
+  background: transparent !important;
   transition: all 0.3s;
 }
 
 .collapse-button:hover {
-  background: #E8F8F0;
-  border-color: #27AE60;
+  background: rgba(39, 174, 96, 0.1) !important;
+  color: #1E8449;
 }
 
 .tagline {
   font-size: 0.8rem;
   text-align: center;
   color: #27AE60;
-  margin: 6px 0 0 0;
+  margin: 4px 0 0 0;
   font-weight: 500;
   letter-spacing: 0.02em;
 }
