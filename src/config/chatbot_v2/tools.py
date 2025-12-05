@@ -581,14 +581,33 @@ def answer_question(question: str) -> str:
             for p in sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True):
                 resp.append(f"- {p['commonName']}: {p['yieldPotential']}/10\n")
     
-    # FALLBACK
+    # FALLBACK - for unrelated questions
     if not resp:
-        resp.append("I can help with:\n")
-        resp.append("• Plant info: 'What is wheat?'\n")
-        resp.append("• Rankings: 'What is the ranking of sorghum?'\n")
-        resp.append("• Characteristics: 'What are the characteristics?'\n")
-        resp.append("• Comparisons: 'Compare wheat with barley'\n")
-        resp.append("• Best plants: 'Which is better for drought?'\n")
-        resp.append("\nAvailable: Bread Wheat, Barley, Corn, Sorghum, Durum Wheat, Alfalfa")
+        # Check if question seems unrelated to plants/agriculture
+        unrelated_keywords = ["weather", "news", "politics", "sport", "football", "movie", "music", 
+                             "recipe", "cooking", "price", "market", "sell", "buy", "phone", "computer",
+                             "game", "film", "song", "kora", "match", "prix", "thaman", "chi7aja"]
+        
+        if any(kw in q for kw in unrelated_keywords) and not any(kw in q for kw in ["plant", "crop", "agriculture", "farm", "nebta", "zar3a"]):
+            resp.append("🌾 **Sorry, I can't answer that.**\n\n")
+            resp.append("I'm specialized in **plant breeding and agriculture** for Algeria.\n\n")
+            resp.append("**Ask me about:**\n")
+            resp.append("• Plants: wheat, barley, corn, sorghum, alfalfa\n")
+            resp.append("• Zones: Northern, High Plateau, Sahara\n")
+            resp.append("• Traits: drought, yield, disease resistance\n")
+            resp.append("• Breeding: hybridization, genetics, crossing\n")
+            resp.append("• Comparisons: 'Compare wheat with barley'\n")
+            resp.append("• Rankings: 'What is the ranking of sorghum?'\n\n")
+            resp.append("💬 **Algerian dialect welcome!** \n")
+            resp.append("Try: 'wach a7san nebta lel jfaf?' or 'kamh walla ch3ir?'")
+        else:
+            # Generic fallback for unclear plant-related questions
+            resp.append("I can help with:\n")
+            resp.append("• Plant info: 'What is wheat?' or 'wach howa el kamh?'\n")
+            resp.append("• Rankings: 'What is the ranking of sorghum?' or 'tartib el dra?'\n")
+            resp.append("• Characteristics: 'What are the characteristics?' or 'khasa2is?'\n")
+            resp.append("• Comparisons: 'Compare wheat with barley' or '9arn el kamh w el ch3ir'\n")
+            resp.append("• Best plants: 'Which is better for drought?' or 'a7san lel jfaf?'\n")
+            resp.append("\nAvailable: Bread Wheat, Barley, Corn, Sorghum, Durum Wheat, Alfalfa")
     
     return "".join(resp)
