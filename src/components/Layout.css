@@ -66,11 +66,12 @@
   color: #1E8449;
 }
 
-/* Center button horizontally when collapsed */
+/* Center button horizontally when sidebar is collapsed */
 .ant-layout-sider-collapsed .collapse-button {
   position: relative;
   top: auto;
   right: auto;
+  left: auto;
   margin: 0 auto;
 }
 
@@ -120,4 +121,4 @@
 .ant-menu-light .ant-menu-item:hover {
   background-color: #E8F8F0 !important;
   color: #27AE60 !important;
-}
+}}
