@@ -25,50 +25,19 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from config.chatbot_prompt import chatbot_config, get_response_template
 from config.chatbot_tools import chatbot_tools, execute_tool
-
-# Try to import Claude service
-try:
-    from services.claude_service import ClaudeChatbotService
-    CLAUDE_AVAILABLE = True
-except ImportError:
-    CLAUDE_AVAILABLE = False
-    print("⚠️  Claude service not available (anthropic package not installed)")
-
-# Try to import Dynamic Gemini service
-try:
-    from services.gemini_dynamic import DynamicGeminiService
-    GEMINI_DYNAMIC_AVAILABLE = True
-except ImportError:
-    GEMINI_DYNAMIC_AVAILABLE = False
-    print("⚠️  Gemini service not available (google-generativeai not installed)")
+from services.ai_service import GeminiService, get_ai_service
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-# Initialize AI services (priority order: Claude > Gemini Dynamic > Fallback)
-claude_service = None
-gemini_service = None
-
-# Try Claude first
-if CLAUDE_AVAILABLE:
-    try:
-        claude_service = ClaudeChatbotService()
-        print("✅ Claude AI service initialized successfully")
-    except Exception as e:
-        print(f"⚠️  Claude service initialization failed: {e}")
-
-# Try Dynamic Gemini as fallback
-if not claude_service and GEMINI_DYNAMIC_AVAILABLE:
-    try:
-        gemini_service = DynamicGeminiService()
-        print("✅ Gemini AI (Dynamic) service initialized successfully")
-        print(f"   Model: {gemini_service.model._model_name}")
-        print(f"   Features: System instruction, Chat history, Streaming, Safety settings")
-    except Exception as e:
-        print(f"⚠️  Gemini service initialization failed: {e}")
-
-if not claude_service and not gemini_service:
-    print("🟡 Using flexible fallback response system")
+# Initialize Gemini service
+try:
+    gemini_service = GeminiService()
+    print("✓ Gemini AI service initialized successfully")
+except Exception as e:
+    gemini_service = None
+    print(f"⚠️  Gemini service not available: {e}")
+    print("   Install with: pip install google-generativeai")
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -102,22 +71,18 @@ def chat():
                 "success": False
             }), 400
         
-        # Use AI service (priority: Claude > Gemini Dynamic > Fallback)
-        if claude_service:
-            response = claude_service.chat(user_message, conversation_history)
-            service_name = "Claude AI (Sonnet 4)"
-        elif gemini_service:
+        # Use Gemini AI service if available
+        if gemini_service:
             response = gemini_service.chat(user_message, conversation_history)
-            service_name = f"Gemini AI Dynamic ({gemini_service.model._model_name})"
         else:
+            # Fallback to simple response
             from services.ai_service import simple_chat_response
             response = simple_chat_response(user_message)
-            service_name = "Flexible Data-Driven Fallback"
         
         return jsonify({
             "response": response,
             "success": True,
-            "service": service_name
+            "service": "Gemini AI" if gemini_service else "Simple Fallback"
         })
         
     except Exception as e:
@@ -226,9 +191,7 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "service": "Zer3aZ Chatbot API",
-        "claude_available": claude_service is not None,
-        "gemini_available": gemini_service is not None,
-        "active_service": "Claude AI" if claude_service else "Gemini AI" if gemini_service else "Fallback"
+        "gemini_available": gemini_service is not None
     })
 
 
@@ -286,13 +249,12 @@ def generate_report():
 
 if __name__ == '__main__':
     print("Starting Zer3aZ Chatbot API...")
-    print("API available at: http://localhost:5001")
+    print("API available at: http://localhost:5000")
     print("\nEndpoints:")
     print("  POST /api/chat - Send chat messages")
     print("  GET  /api/config - Get chatbot config")
     print("  GET  /api/tools - List available tools")
     print("  POST /api/tool/<name> - Execute a tool")
-    print("  POST /api/generate-report - Generate breeding report")
     print("  GET  /api/health - Health check")
     
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5000)
