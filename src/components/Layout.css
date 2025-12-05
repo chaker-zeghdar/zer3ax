@@ -21,6 +21,12 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* When sidebar is collapsed, center the logo */
+.ant-layout-sider-collapsed .logo {
+  justify-content: center;
+  gap: 0;
+}
+
 .logo-image {
   width: 40px;
   height: 40px;
@@ -50,11 +56,25 @@
   border-radius: 6px;
   background: transparent !important;
   transition: all 0.3s;
+  z-index: 10;
+  cursor: pointer;
 }
 
 .collapse-button:hover {
   background: rgba(39, 174, 96, 0.1) !important;
   color: #1E8449;
+}
+
+/* Keep button in top-right even when collapsed */
+.ant-layout-sider-collapsed .collapse-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+/* Adjust logo container padding when collapsed for better centering */
+.ant-layout-sider-collapsed .logo-container {
+  padding: 8px;
 }
 
 .tagline {

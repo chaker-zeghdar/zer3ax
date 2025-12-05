@@ -95,6 +95,7 @@ const AppLayout = ({ children }) => {
           trigger={null}
           theme="light"
           width={260}
+          collapsedWidth={80}
           style={{
             position: 'fixed',
             left: 0,
@@ -131,8 +132,6 @@ const AppLayout = ({ children }) => {
             items={menuItems}
             onClick={handleMenuClick}
           />
-
-       
         </Sider>
 
         <Layout style={{ marginLeft: collapsed ? 80 : 260, transition: 'margin-left 0.2s' }}>
