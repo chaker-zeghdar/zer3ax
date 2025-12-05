@@ -164,6 +164,96 @@ def answer_question(question: str) -> str:
     q = question.lower()
     resp = []
     
+    # COMPARISON QUESTIONS (compare X with Y / compare it with X)
+    if "compare" in q or "vs" in q or "versus" in q or kw["type"] == "comparison":
+        if len(kw["plants"]) >= 2:
+            # Compare two plants
+            p1 = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
+            p2 = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][1]), None)
+            if p1 and p2:
+                resp.append(f"**{p1['commonName']} vs {p2['commonName']}**\n\n")
+                resp.append(f"{p1['icon']} **{p1['commonName']}:**\n")
+                resp.append(f"  • Drought: {p1['resistance']['drought']}/10\n")
+                resp.append(f"  • Yield: {p1['yieldPotential']}/10\n")
+                resp.append(f"  • Zone: {p1['optimalZone']}\n\n")
+                resp.append(f"{p2['icon']} **{p2['commonName']}:**\n")
+                resp.append(f"  • Drought: {p2['resistance']['drought']}/10\n")
+                resp.append(f"  • Yield: {p2['yieldPotential']}/10\n")
+                resp.append(f"  • Zone: {p2['optimalZone']}\n\n")
+                
+                # Winner
+                if p1['resistance']['drought'] > p2['resistance']['drought']:
+                    resp.append(f"✅ {p1['commonName']} is better for drought\n")
+                else:
+                    resp.append(f"✅ {p2['commonName']} is better for drought\n")
+                if p1['yieldPotential'] > p2['yieldPotential']:
+                    resp.append(f"✅ {p1['commonName']} has higher yield\n")
+                else:
+                    resp.append(f"✅ {p2['commonName']} has higher yield\n")
+                return "".join(resp)
+    
+    # BETTER/WHICH QUESTIONS
+    if "better" in q or ("which" in q and ("one" in q or "is" in q)):
+        # Extract target trait or plant
+        if kw["plants"]:
+            # "which one is better for corn" - means compare FOR corn (corn production/crossing)
+            target_plant = kw["plants"][0]
+            plant = next((p for p in PLANTS_DATA if p["commonName"] == target_plant), None)
+            if plant:
+                resp.append(f"**For crossing/breeding with {plant['commonName']}:**\n\n")
+                resp.append(f"Best compatibility partners would be plants from similar zones:\n")
+                similar_zone = [p for p in PLANTS_DATA if p["optimalZone"] == plant["optimalZone"] and p["commonName"] != plant["commonName"]]
+                for p in similar_zone[:3]:
+                    resp.append(f"• {p['commonName']} (same {p['optimalZone']} zone, yield: {p['yieldPotential']}/10)\n")
+                return "".join(resp)
+        elif "drought" in q:
+            best = max(PLANTS_DATA, key=lambda p: p["resistance"]["drought"])
+            resp.append(f"✅ **Best for drought:** {best['commonName']} ({best['resistance']['drought']}/10)\n")
+            return "".join(resp)
+        elif "yield" in q:
+            best = max(PLANTS_DATA, key=lambda p: p["yieldPotential"])
+            resp.append(f"✅ **Best for yield:** {best['commonName']} ({best['yieldPotential']}/10)\n")
+            return "".join(resp)
+    
+    # CHARACTERISTIC/TRAIT QUESTIONS
+    if "characteristic" in q or "traits" in q or "properties" in q:
+        if kw["plants"]:
+            plant = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
+            if plant:
+                resp.append(f"**{plant['commonName']} Characteristics:**\n")
+                resp.append(f"• Genome: {plant['genomeSize']:,} Mbp\n")
+                resp.append(f"• Climate: {plant['temperature']}, {plant['rainfall']}\n")
+                resp.append(f"• Drought Resistance: {plant['resistance']['drought']}/10\n")
+                resp.append(f"• Salinity Resistance: {plant['resistance']['salinity']}/10\n")
+                resp.append(f"• Disease Resistance: {plant['resistance']['disease']}/10\n")
+                resp.append(f"• Yield Potential: {plant['yieldPotential']}/10\n")
+                resp.append(f"• Optimal Zone: {plant['optimalZone']}\n")
+                return "".join(resp)
+        else:
+            # Generic characteristics question
+            resp.append("Available plant characteristics:\n")
+            resp.append("• Genome size, Climate needs, Drought/Salinity/Disease resistance\n")
+            resp.append("• Yield potential, Optimal zone\n\n")
+            resp.append("Ask: 'What are the characteristics of [plant name]?'")
+            return "".join(resp)
+    
+    # RANKING QUESTIONS ("what is the ranking of X")
+    if "ranking" in q:
+        if kw["plants"]:
+            plant = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
+            if plant:
+                sorted_drought = sorted(PLANTS_DATA, key=lambda p: p["resistance"]["drought"], reverse=True)
+                sorted_yield = sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True)
+                drought_rank = sorted_drought.index(plant) + 1
+                yield_rank = sorted_yield.index(plant) + 1
+                
+                resp.append(f"**{plant['commonName']} Rankings:**\n")
+                resp.append(f"• Drought: #{drought_rank}/{len(PLANTS_DATA)} ({plant['resistance']['drought']}/10)\n")
+                resp.append(f"• Yield: #{yield_rank}/{len(PLANTS_DATA)} ({plant['yieldPotential']}/10)\n")
+                resp.append(f"• Salinity: {plant['resistance']['salinity']}/10\n")
+                resp.append(f"• Disease: {plant['resistance']['disease']}/10\n")
+                return "".join(resp)
+    
     # PLANT-SPECIFIC QUESTIONS
     if kw["plants"]:
         plant = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
@@ -186,22 +276,22 @@ def answer_question(question: str) -> str:
             resp.append(f"- Best Plants: {', '.join(zone['bestPlants'])}\n")
             resp.append(f"- Suitability: {zone['suitability']}/10\n")
     
-    # RANKING QUESTIONS
+    # RANKING BY TRAIT
     elif kw["type"] == "ranking":
         if "drought" in kw["traits"]:
             sorted_p = sorted(PLANTS_DATA, key=lambda p: p["resistance"]["drought"], reverse=True)
-            resp.append("**Top 3 for Drought Resistance:**\n")
-            for i, p in enumerate(sorted_p[:3], 1):
+            resp.append("**Drought Resistance Rankings:**\n")
+            for i, p in enumerate(sorted_p, 1):
                 resp.append(f"{i}. {p['commonName']}: {p['resistance']['drought']}/10\n")
         elif "yield" in kw["traits"]:
             sorted_p = sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True)
-            resp.append("**Top 3 for Yield:**\n")
-            for i, p in enumerate(sorted_p[:3], 1):
+            resp.append("**Yield Rankings:**\n")
+            for i, p in enumerate(sorted_p, 1):
                 resp.append(f"{i}. {p['commonName']}: {p['yieldPotential']}/10\n")
     
     # RECOMMENDATION QUESTIONS
     elif kw["type"] == "recommendation":
-        if "drought" in q or "dry" in q:
+        if "drought" in q:
             best = max(PLANTS_DATA, key=lambda p: p["resistance"]["drought"])
             resp.append(f"**Best for Drought:** {best['commonName']} ({best['resistance']['drought']}/10)\n")
         elif kw["zones"]:
@@ -213,19 +303,22 @@ def answer_question(question: str) -> str:
     elif kw["traits"]:
         trait = kw["traits"][0]
         if trait == "drought":
-            resp.append("**Drought Resistance Rankings:**\n")
+            resp.append("**Drought Resistance:**\n")
             for p in sorted(PLANTS_DATA, key=lambda p: p["resistance"]["drought"], reverse=True):
                 resp.append(f"- {p['commonName']}: {p['resistance']['drought']}/10\n")
         elif trait == "yield":
-            resp.append("**Yield Potential Rankings:**\n")
+            resp.append("**Yield Potential:**\n")
             for p in sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True):
                 resp.append(f"- {p['commonName']}: {p['yieldPotential']}/10\n")
     
     # FALLBACK
     if not resp:
-        resp.append("**Available Plants:**\n")
-        for p in PLANTS_DATA:
-            resp.append(f"- {p['commonName']} ({p['optimalZone']})\n")
-        resp.append("\nAsk me about any plant, zone, or trait!")
+        resp.append("I can help with:\n")
+        resp.append("• Plant info: 'What is wheat?'\n")
+        resp.append("• Rankings: 'What is the ranking of sorghum?'\n")
+        resp.append("• Characteristics: 'What are the characteristics?'\n")
+        resp.append("• Comparisons: 'Compare wheat with barley'\n")
+        resp.append("• Best plants: 'Which is better for drought?'\n")
+        resp.append("\nAvailable: Bread Wheat, Barley, Corn, Sorghum, Durum Wheat, Alfalfa")
     
     return "".join(resp)
