@@ -33,7 +33,7 @@ const Chatbot = () => {
     setInputValue('');
     setIsLoading(true);
 
-    // Call Python chatbot API
+    // Call Python chatbot API with keyword-based method
     try {
       console.log('Sending message to API:', currentInput);
       const response = await fetch('http://localhost:5001/api/chat', {
