@@ -1,23 +1,100 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, X } from 'lucide-react';
-import { plants } from '../data/mockData';
+import { searchPlants, analyzePlant, getPlantIcon } from '../services/api-service';
 import './Encyclopedia.css';
 
 const Encyclopedia = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlant, setSelectedPlant] = useState(null);
+  const [selectedPlantDetails, setSelectedPlantDetails] = useState(null);
   const [filterZone, setFilterZone] = useState('all');
-  const [filterPollination, setFilterPollination] = useState('all');
+  const [allPlants, setAllPlants] = useState([]);
+  const [displayedPlants, setDisplayedPlants] = useState([]);
+  const [plantDetailsCache, setPlantDetailsCache] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [error, setError] = useState(null);
 
-  const filteredPlants = plants.filter(plant => {
-    const matchesSearch = plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         plant.commonName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesZone = filterZone === 'all' || plant.optimalZone === filterZone;
-    const matchesPollination = filterPollination === 'all' || plant.pollinationType === filterPollination;
+  // Fetch all plants on mount
+  useEffect(() => {
+    const fetchPlants = async () => {
+      try {
+        setLoading(true);
+        const plants = await searchPlants('');
+        
+        // Fetch details for first batch of plants to get climate zones
+        const detailsPromises = plants.slice(0, 20).map(async (plantName) => {
+          try {
+            const details = await analyzePlant(plantName, 1);
+            return { name: plantName, details };
+          } catch (err) {
+            console.error(`Error fetching ${plantName}:`, err);
+            return { name: plantName, details: null };
+          }
+        });
+        
+        const detailsResults = await Promise.all(detailsPromises);
+        const cache = {};
+        detailsResults.forEach(({ name, details }) => {
+          if (details) cache[name] = details;
+        });
+        
+        setPlantDetailsCache(cache);
+        setAllPlants(plants);
+        setDisplayedPlants(plants);
+      } catch (err) {
+        console.error('Error fetching plants:', err);
+        setError('Failed to load plants. Please ensure the backend is running.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlants();
+  }, []);
+
+  // Filter plants based on search and filters
+  useEffect(() => {
+    let filtered = allPlants;
     
-    return matchesSearch && matchesZone && matchesPollination;
-  });
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(plant => 
+        plant.toLowerCase().includes(lowerSearch)
+      );
+    }
+    
+    if (filterZone !== 'all') {
+      filtered = filtered.filter(plantName => {
+        const details = plantDetailsCache[plantName];
+        return details && details.climate_zone === filterZone;
+      });
+    }
+    
+    setDisplayedPlants(filtered);
+  }, [searchTerm, filterZone, allPlants, plantDetailsCache]);
+
+  // Fetch selected plant details
+  const handlePlantClick = async (plantName) => {
+    setSelectedPlant(plantName);
+    setLoadingDetails(true);
+    
+    try {
+      // Check cache first
+      if (plantDetailsCache[plantName]) {
+        setSelectedPlantDetails(plantDetailsCache[plantName]);
+      } else {
+        const details = await analyzePlant(plantName, 5);
+        setSelectedPlantDetails(details);
+        setPlantDetailsCache(prev => ({ ...prev, [plantName]: details }));
+      }
+    } catch (err) {
+      console.error('Error fetching plant details:', err);
+      setError('Failed to load plant details.');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   return (
     <div className="encyclopedia-page">
@@ -29,6 +106,19 @@ const Encyclopedia = () => {
         <h1>📚 Plant Encyclopedia</h1>
         <p>Comprehensive database of plant traits and characteristics</p>
       </motion.div>
+
+      {error && (
+        <div style={{
+          background: 'var(--error)',
+          color: 'white',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1rem',
+          textAlign: 'center'
+        }}>
+          {error}
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="search-filter-section">
@@ -55,20 +145,10 @@ const Encyclopedia = () => {
             <label>Zone:</label>
             <select value={filterZone} onChange={(e) => setFilterZone(e.target.value)}>
               <option value="all">All</option>
-              <option value="Northern">Northern</option>
-              <option value="High Plateau">High Plateau</option>
-              <option value="Sahara">Sahara</option>
-            </select>
-          </div>
-
-          <div className="filter-item">
-            <Filter size={18} />
-            <label>Pollination:</label>
-            <select value={filterPollination} onChange={(e) => setFilterPollination(e.target.value)}>
-              <option value="all">All</option>
-              <option value="Wind">Wind</option>
-              <option value="Self">Self</option>
-              <option value="Insect">Insect</option>
+              <option value="Tropical">Tropical</option>
+              <option value="Temperate">Temperate</option>
+              <option value="Arid">Arid</option>
+              <option value="Cold">Cold</option>
             </select>
           </div>
         </div>
@@ -76,63 +156,60 @@ const Encyclopedia = () => {
 
       {/* Results Count */}
       <div className="results-count">
-        Showing {filteredPlants.length} of {plants.length} plants
+        {loading ? 'Loading plants...' : `Showing ${displayedPlants.length} of ${allPlants.length} plants`}
       </div>
 
       {/* Plants Grid */}
       <div className="plants-grid">
-        {filteredPlants.map((plant, index) => (
-          <motion.div
-            key={plant.id}
-            className="plant-encyclopedia-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ y: -5 }}
-            onClick={() => setSelectedPlant(plant)}
-          >
-            <div className="plant-card-icon">{plant.icon}</div>
-            <h3 className="plant-card-title">{plant.commonName}</h3>
-            <p className="plant-card-scientific">{plant.name}</p>
-            
-            <div className="plant-card-traits">
-              <div className="trait-badge">
-                <span className="trait-badge-label">Zone</span>
-                <span className="trait-badge-value">{plant.optimalZone}</span>
-              </div>
-              <div className="trait-badge">
-                <span className="trait-badge-label">Pollination</span>
-                <span className="trait-badge-value">{plant.pollinationType}</span>
-              </div>
-            </div>
+        {displayedPlants.slice(0, 50).map((plantName, index) => {
+          const details = plantDetailsCache[plantName];
+          return (
+            <motion.div
+              key={plantName}
+              className="plant-encyclopedia-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.02 }}
+              whileHover={{ y: -5 }}
+              onClick={() => handlePlantClick(plantName)}
+            >
+              <div className="plant-card-icon">{getPlantIcon(details?.climate_zone, plantName)}</div>
+              <h3 className="plant-card-title">{plantName}</h3>
+              
+              {details && (
+                <>
+                  <div className="plant-card-traits">
+                    <div className="trait-badge">
+                      <span className="trait-badge-label">Zone</span>
+                      <span className="trait-badge-value">{details.climate_zone}</span>
+                    </div>
+                    <div className="trait-badge">
+                      <span className="trait-badge-label">Cluster</span>
+                      <span className="trait-badge-value">{details.cluster}</span>
+                    </div>
+                  </div>
 
-            <div className="plant-card-stats">
-              <div className="stat-item">
-                <span className="stat-icon">💧</span>
-                <span className="stat-value">{plant.resistance.drought}/10</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-icon">🌾</span>
-                <span className="stat-value">{plant.yieldPotential}/10</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-icon">🧬</span>
-                <span className="stat-value">{plant.geneticDiversity}/10</span>
-              </div>
-            </div>
+                  <div className="plant-card-stats">
+                    <div className="stat-item">
+                      <span className="stat-icon">🧬</span>
+                      <span className="stat-value">{details.hybridization_score.toFixed(1)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
-            <button className="view-details-btn">View Details</button>
-          </motion.div>
-        ))}
+              <button className="view-details-btn">View Details</button>
+            </motion.div>
+          );
+        })}
       </div>
 
-      {filteredPlants.length === 0 && (
+      {displayedPlants.length === 0 && !loading && (
         <div className="no-results">
           <p>No plants found matching your criteria</p>
           <button onClick={() => {
             setSearchTerm('');
             setFilterZone('all');
-            setFilterPollination('all');
           }}>
             Clear Filters
           </button>
@@ -141,61 +218,77 @@ const Encyclopedia = () => {
 
       {/* Plant Details Modal */}
       {selectedPlant && (
-        <div className="modal-overlay" onClick={() => setSelectedPlant(null)}>
+        <div className="modal-overlay" onClick={() => {
+          setSelectedPlant(null);
+          setSelectedPlantDetails(null);
+        }}>
           <motion.div
             className="modal-content"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="modal-close" onClick={() => setSelectedPlant(null)}>
+            <button className="modal-close" onClick={() => {
+              setSelectedPlant(null);
+              setSelectedPlantDetails(null);
+            }}>
               <X size={24} />
             </button>
 
-            <div className="modal-header">
-              <span className="modal-icon">{selectedPlant.icon}</span>
-              <div>
-                <h2>{selectedPlant.commonName}</h2>
-                <p className="modal-scientific">{selectedPlant.name}</p>
+            {loadingDetails ? (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>Loading plant details...</p>
               </div>
-            </div>
-
-            <div className="modal-body">
-              <div className="detail-section">
-                <h3>Basic Information</h3>
-                <div className="detail-grid">
-                  <DetailRow label="Perenniality" value={selectedPlant.perenniality} />
-                  <DetailRow label="Woodiness" value={selectedPlant.woodiness} />
-                  <DetailRow label="Pollination Type" value={selectedPlant.pollinationType} />
-                  <DetailRow label="Genome Size" value={`${selectedPlant.genomeSize} Mb`} />
-                  <DetailRow label="Growth Form" value={selectedPlant.growthForm} />
-                  <DetailRow label="Root Depth" value={selectedPlant.rootDepth} />
-                  <DetailRow label="Lifespan" value={selectedPlant.lifespan} />
-                  <DetailRow label="Optimal Zone" value={selectedPlant.optimalZone} />
+            ) : selectedPlantDetails ? (
+              <>
+                <div className="modal-header">
+                  <span className="modal-icon">{getPlantIcon(selectedPlantDetails.climate_zone, selectedPlant)}</span>
+                  <div>
+                    <h2>{selectedPlant}</h2>
+                    <p className="modal-scientific">Cluster {selectedPlantDetails.cluster}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="detail-section">
-                <h3>Environmental Requirements</h3>
-                <div className="detail-grid">
-                  <DetailRow label="Rainfall" value={selectedPlant.environmentalFactor.rainfall} />
-                  <DetailRow label="Temperature" value={selectedPlant.environmentalFactor.temperature} />
-                  <DetailRow label="Drought Tolerance" value={selectedPlant.environmentalFactor.droughtTolerance} />
-                  <DetailRow label="Soil Preference" value={selectedPlant.soilPreference} />
-                </div>
-              </div>
+                <div className="modal-body">
+                  <div className="detail-section">
+                    <h3>Basic Information</h3>
+                    <div className="detail-grid">
+                      <DetailRow label="Hybridization Score" value={selectedPlantDetails.hybridization_score.toFixed(2)} />
+                      <DetailRow label="Climate Zone" value={selectedPlantDetails.climate_zone} />
+                      <DetailRow label="Cluster" value={selectedPlantDetails.cluster} />
+                    </div>
+                  </div>
 
-              <div className="detail-section">
-                <h3>Resistance & Performance</h3>
-                <div className="resistance-bars">
-                  <ResistanceBar label="Drought Resistance" value={selectedPlant.resistance.drought} />
-                  <ResistanceBar label="Salinity Resistance" value={selectedPlant.resistance.salinity} />
-                  <ResistanceBar label="Disease Resistance" value={selectedPlant.resistance.disease} />
-                  <ResistanceBar label="Yield Potential" value={selectedPlant.yieldPotential} />
-                  <ResistanceBar label="Genetic Diversity" value={selectedPlant.geneticDiversity} />
+                  {selectedPlantDetails.nearest_neighbors && selectedPlantDetails.nearest_neighbors.length > 0 && (
+                    <div className="detail-section">
+                      <h3>Similar Plants (Nearest Neighbors)</h3>
+                      <div className="neighbors-list">
+                        {selectedPlantDetails.nearest_neighbors.map((neighbor, idx) => (
+                          <div key={idx} className="neighbor-item">
+                            <span>{getPlantIcon(selectedPlantDetails.climate_zone, neighbor.plant)}</span>
+                            <span>{neighbor.plant}</span>
+                            <span className="neighbor-distance">Distance: {neighbor.distance.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="detail-section">
+                    <h3>Feature Values</h3>
+                    <div className="resistance-bars">
+                      {Object.entries(selectedPlantDetails.features || {}).slice(0, 8).map(([key, value]) => (
+                        <ResistanceBar key={key} label={key.replace(/_/g, ' ')} value={value * 10} />
+                      ))}
+                    </div>
+                  </div>
                 </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>No details available</p>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       )}

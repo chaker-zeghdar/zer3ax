@@ -1,39 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Loader, ChevronDown } from 'lucide-react';
-import { plants, predictHybrid } from '../data/mockData';
+import { Loader } from 'lucide-react';
+import { searchPlants, comparePlants, getCompatibilityRating } from '../services/api-service';
 import './Predict.css';
 
 const Predict = () => {
-  const [plantA, setPlantA] = useState(null);
-  const [plantB, setPlantB] = useState(null);
-  const [searchA, setSearchA] = useState('');
-  const [searchB, setSearchB] = useState('');
-  const [showDropdownA, setShowDropdownA] = useState(false);
-  const [showDropdownB, setShowDropdownB] = useState(false);
+  const [plantA, setPlantA] = useState('');
+  const [plantB, setPlantB] = useState('');
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [allPlants, setAllPlants] = useState([]);
+  const [error, setError] = useState(null);
 
-  const filteredPlantsA = plants.filter(p => 
-    p.name.toLowerCase().includes(searchA.toLowerCase()) ||
-    p.commonName.toLowerCase().includes(searchA.toLowerCase())
-  );
-
-  const filteredPlantsB = plants.filter(p => 
-    p.name.toLowerCase().includes(searchB.toLowerCase()) ||
-    p.commonName.toLowerCase().includes(searchB.toLowerCase())
-  );
+  // Fetch all plants on component mount
+  useEffect(() => {
+    const fetchPlants = async () => {
+      try {
+        const plants = await searchPlants('');
+        setAllPlants(Array.isArray(plants) ? plants : []);
+      } catch (err) {
+        console.error('Error fetching plants:', err);
+        setError('Failed to load plants. Please ensure the backend is running.');
+        setAllPlants([]);
+      }
+    };
+    fetchPlants();
+  }, []);
 
   const handlePredict = async () => {
     if (!plantA || !plantB) return;
     
     setLoading(true);
-    // Simulate AI processing
-    setTimeout(() => {
-      const result = predictHybrid(plantA.id, plantB.id);
-      setPrediction(result);
+    setError(null);
+    
+    try {
+      // Call backend API
+      const result = await comparePlants(plantA, plantB);
+      
+      // Transform API response to match UI expectations
+      const compatibility = getCompatibilityRating(result.distance, result.same_cluster);
+      
+      const transformedPrediction = {
+        successRate: compatibility.percentage,
+        confidence: result.distance < 2.0 ? 0.95 : result.distance < 4.0 ? 0.85 : 0.70,
+        sharedTraits: [
+          result.same_cluster && 'Same Cluster',
+          result.plant_a.climate_zone === result.plant_b.climate_zone && 'Same Climate Zone',
+          Math.abs(result.plant_a.hybridization_score - result.plant_b.hybridization_score) < 0.5 && 'Similar Hybridization Score'
+        ].filter(Boolean),
+        featureImpact: [
+          {
+            trait: 'Cluster Similarity',
+            impact: result.same_cluster ? 15 : -10
+          },
+          {
+            trait: 'Euclidean Distance',
+            impact: result.distance < 3.0 ? 20 : -15
+          },
+          {
+            trait: 'Climate Zone Match',
+            impact: result.plant_a.climate_zone === result.plant_b.climate_zone ? 12 : -8
+          },
+          {
+            trait: 'Hybridization Score Difference',
+            impact: Math.abs(result.plant_a.hybridization_score - result.plant_b.hybridization_score) < 0.5 ? 10 : -5
+          }
+        ],
+        recommendation: result.recommendation,
+        distance: result.distance,
+        plantADetails: result.plant_a,
+        plantBDetails: result.plant_b
+      };
+      
+      setPrediction(transformedPrediction);
+    } catch (err) {
+      console.error('Prediction error:', err);
+      setError(err.message || 'Failed to predict hybridization. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const getConfidenceLevel = (confidence) => {
@@ -55,9 +100,27 @@ const Predict = () => {
         animate={{ opacity: 1, y: 0 }}
         className="predict-header"
       >
-        <h1>🧬 Hybrid Prediction</h1>
+        <h1>Hybrid Prediction</h1>
         <p>Predict the likelihood of successful hybridization between two plant species</p>
       </motion.div>
+
+      {error && (
+        <motion.div
+          className="error-banner"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: 'var(--error)',
+            color: 'white',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            textAlign: 'center'
+          }}
+        >
+          {error}
+        </motion.div>
+      )}
 
       <div className="predict-container">
         {/* Selection Form */}
@@ -71,89 +134,35 @@ const Predict = () => {
           {/* Plant A Selection */}
           <div className="plant-selector">
             <label>Plant A</label>
-            <div className="dropdown-container">
-              <div className="search-input-wrapper" onClick={() => setShowDropdownA(true)}>
-                <Search size={18} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search for a plant..."
-                  value={plantA ? `${plantA.icon} ${plantA.name} (${plantA.commonName})` : searchA}
-                  onChange={(e) => {
-                    setSearchA(e.target.value);
-                    setPlantA(null);
-                    setShowDropdownA(true);
-                  }}
-                  onFocus={() => setShowDropdownA(true)}
-                />
-                <ChevronDown size={18} className="dropdown-icon" />
-              </div>
-              
-              {showDropdownA && (
-                <div className="dropdown-menu">
-                  {filteredPlantsA.map((plant) => (
-                    <div
-                      key={plant.id}
-                      className="dropdown-item"
-                      onClick={() => {
-                        setPlantA(plant);
-                        setSearchA('');
-                        setShowDropdownA(false);
-                      }}
-                    >
-                      <span className="plant-icon">{plant.icon}</span>
-                      <div className="plant-info">
-                        <span className="plant-name">{plant.name}</span>
-                        <span className="plant-common">({plant.commonName})</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <select 
+              value={plantA || ''} 
+              onChange={(e) => setPlantA(e.target.value)}
+              className="plant-select"
+            >
+              <option value="">Select a plant...</option>
+              {Array.isArray(allPlants) && allPlants.map((plantName) => (
+                <option key={plantName} value={plantName}>
+                  {plantName}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Plant B Selection */}
           <div className="plant-selector">
             <label>Plant B</label>
-            <div className="dropdown-container">
-              <div className="search-input-wrapper" onClick={() => setShowDropdownB(true)}>
-                <Search size={18} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search for a plant..."
-                  value={plantB ? `${plantB.icon} ${plantB.name} (${plantB.commonName})` : searchB}
-                  onChange={(e) => {
-                    setSearchB(e.target.value);
-                    setPlantB(null);
-                    setShowDropdownB(true);
-                  }}
-                  onFocus={() => setShowDropdownB(true)}
-                />
-                <ChevronDown size={18} className="dropdown-icon" />
-              </div>
-              
-              {showDropdownB && (
-                <div className="dropdown-menu">
-                  {filteredPlantsB.map((plant) => (
-                    <div
-                      key={plant.id}
-                      className="dropdown-item"
-                      onClick={() => {
-                        setPlantB(plant);
-                        setSearchB('');
-                        setShowDropdownB(false);
-                      }}
-                    >
-                      <span className="plant-icon">{plant.icon}</span>
-                      <div className="plant-info">
-                        <span className="plant-name">{plant.name}</span>
-                        <span className="plant-common">({plant.commonName})</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <select 
+              value={plantB || ''} 
+              onChange={(e) => setPlantB(e.target.value)}
+              className="plant-select"
+            >
+              <option value="">Select a plant...</option>
+              {Array.isArray(allPlants) && allPlants.map((plantName) => (
+                <option key={plantName} value={plantName}>
+                  {plantName}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button 

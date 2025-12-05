@@ -1,83 +1,106 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ChevronDown, ArrowRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { plants } from '../data/mockData';
+import { ArrowRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
+import { searchPlants, comparePlants, analyzePlant, getCompatibilityRating } from '../services/api-service';
 import './Compare.css';
 
 const Compare = () => {
-  const [plantA, setPlantA] = useState(null);
-  const [plantB, setPlantB] = useState(null);
-  const [searchA, setSearchA] = useState('');
-  const [searchB, setSearchB] = useState('');
-  const [showDropdownA, setShowDropdownA] = useState(false);
-  const [showDropdownB, setShowDropdownB] = useState(false);
+  const [plantA, setPlantA] = useState('');
+  const [plantB, setPlantB] = useState('');
+  const [allPlants, setAllPlants] = useState([]);
+  const [searchQueryA, setSearchQueryA] = useState('');
+  const [searchQueryB, setSearchQueryB] = useState('');
+  const [plantADetails, setPlantADetails] = useState(null);
+  const [plantBDetails, setPlantBDetails] = useState(null);
+  const [comparison, setComparison] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const filteredPlantsA = plants.filter(p => 
-    p.name.toLowerCase().includes(searchA.toLowerCase()) ||
-    p.commonName.toLowerCase().includes(searchA.toLowerCase())
-  );
+  // Fetch all plants on mount
+  useEffect(() => {
+    const fetchPlants = async () => {
+      try {
+        const plants = await searchPlants('');
+        setAllPlants(plants);
+      } catch (err) {
+        console.error('Error fetching plants:', err);
+        setError('Failed to load plants. Please ensure the backend is running.');
+      }
+    };
+    fetchPlants();
+  }, []);
 
-  const filteredPlantsB = plants.filter(p => 
-    p.name.toLowerCase().includes(searchB.toLowerCase()) ||
-    p.commonName.toLowerCase().includes(searchB.toLowerCase())
-  );
+  // Fetch plant details and compare when both plants are selected
+  useEffect(() => {
+    const fetchComparison = async () => {
+      if (plantA && plantB) {
+        setLoading(true);
+        setError(null);
+        try {
+          const [detailsA, detailsB, comparisonResult] = await Promise.all([
+            analyzePlant(plantA, 3),
+            analyzePlant(plantB, 3),
+            comparePlants(plantA, plantB)
+          ]);
+          setPlantADetails(detailsA);
+          setPlantBDetails(detailsB);
+          setComparison(comparisonResult);
+        } catch (err) {
+          console.error('Comparison error:', err);
+          setError(err.message || 'Failed to compare plants.');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchComparison();
+  }, [plantA, plantB]);
 
   const compareTraits = () => {
-    if (!plantA || !plantB) return null;
+    if (!comparison || !plantADetails || !plantBDetails) return null;
 
-    const droughtDiff = plantA.resistance.drought - plantB.resistance.drought;
-    const salinityDiff = plantA.resistance.salinity - plantB.resistance.salinity;
-    const yieldDiff = plantA.yieldPotential - plantB.yieldPotential;
-
-    let summary = '';
-    if (droughtDiff > 0) {
-      summary += `${plantA.commonName} shows stronger drought tolerance. `;
-    } else if (droughtDiff < 0) {
-      summary += `${plantB.commonName} shows stronger drought tolerance. `;
-    }
-
-    if (Math.abs(plantA.genomeSize - plantB.genomeSize) < 5000) {
-      summary += 'Both plants have compatible genome sizes. ';
+    const compatibility = getCompatibilityRating(comparison.distance, comparison.same_cluster);
+    
+    let summary = `These plants show ${compatibility.level.toLowerCase()} compatibility with a distance of ${comparison.distance.toFixed(2)}. `;
+    
+    if (comparison.same_cluster) {
+      summary += 'They belong to the same cluster, which increases hybridization potential. ';
     } else {
-      summary += 'Significant genome size difference detected. ';
+      summary += 'They are in different clusters. ';
+    }
+    
+    if (plantADetails.climate_zone === plantBDetails.climate_zone) {
+      summary += `Both thrive in ${plantADetails.climate_zone} climate zones.`;
+    } else {
+      summary += `${plantA} prefers ${plantADetails.climate_zone} while ${plantB} prefers ${plantBDetails.climate_zone} conditions.`;
     }
 
-    if (plantA.pollinationType === plantB.pollinationType) {
-      summary += 'Same pollination type increases compatibility.';
-    }
-
-    return summary || 'These plants have mixed compatibility factors.';
+    return summary;
   };
 
+  // Filter plants based on search queries
+  const filteredPlantsA = allPlants.filter(plant => 
+    plant.toLowerCase().includes(searchQueryA.toLowerCase())
+  );
+
+  const filteredPlantsB = allPlants.filter(plant => 
+    plant.toLowerCase().includes(searchQueryB.toLowerCase())
+  );
+
   const getNumericalComparisonData = () => {
-    if (!plantA || !plantB) return [];
+    if (!plantADetails || !plantBDetails) return [];
 
     return [
       {
-        trait: 'Drought Resistance',
-        plantA: plantA.resistance.drought,
-        plantB: plantB.resistance.drought
+        trait: 'Hybridization Score',
+        plantA: (plantADetails.hybridization_score * 10).toFixed(1),
+        plantB: (plantBDetails.hybridization_score * 10).toFixed(1)
       },
       {
-        trait: 'Salinity Resistance',
-        plantA: plantA.resistance.salinity,
-        plantB: plantB.resistance.salinity
-      },
-      {
-        trait: 'Disease Resistance',
-        plantA: plantA.resistance.disease,
-        plantB: plantB.resistance.disease
-      },
-      {
-        trait: 'Yield Potential',
-        plantA: plantA.yieldPotential,
-        plantB: plantB.yieldPotential
-      },
-      {
-        trait: 'Genetic Diversity',
-        plantA: plantA.geneticDiversity,
-        plantB: plantB.geneticDiversity
+        trait: 'Cluster Proximity',
+        plantA: comparison?.same_cluster ? 10 : 5,
+        plantB: comparison?.same_cluster ? 10 : 5
       }
     ];
   };
@@ -89,53 +112,64 @@ const Compare = () => {
         animate={{ opacity: 1, y: 0 }}
         className="compare-header"
       >
-        <h1>📊 Species Comparison</h1>
+        <h1>Species Comparison</h1>
         <p>Side-by-side trait comparison and compatibility analysis</p>
       </motion.div>
+
+      {error && (
+        <motion.div
+          className="error-banner"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: 'var(--error)',
+            color: 'white',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            textAlign: 'center'
+          }}
+        >
+          {error}
+        </motion.div>
+      )}
 
       {/* Selection Section */}
       <div className="selection-section">
         <div className="selector-card">
           <label>Plant A</label>
-          <div className="dropdown-container">
-            <div className="search-input-wrapper" onClick={() => setShowDropdownA(true)}>
-              <Search size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Select plant A..."
-                value={plantA ? `${plantA.icon} ${plantA.name}` : searchA}
-                onChange={(e) => {
-                  setSearchA(e.target.value);
-                  setPlantA(null);
-                  setShowDropdownA(true);
-                }}
-                onFocus={() => setShowDropdownA(true)}
-              />
-              <ChevronDown size={18} />
+          <input
+            type="text"
+            placeholder="Search plants..."
+            value={searchQueryA}
+            onChange={(e) => setSearchQueryA(e.target.value)}
+            className="search-input"
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              marginBottom: '0.5rem',
+              border: '1px solid var(--border-color)',
+              borderRadius: '4px',
+              fontSize: '0.9rem'
+            }}
+          />
+          <select 
+            value={plantA} 
+            onChange={(e) => setPlantA(e.target.value)}
+            className="plant-select"
+          >
+            <option value="">Select a plant...</option>
+            {filteredPlantsA.map((plantName) => (
+              <option key={plantName} value={plantName}>
+                {plantName}
+              </option>
+            ))}
+          </select>
+          {searchQueryA && (
+            <div style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: 'var(--text-secondary)' }}>
+              {filteredPlantsA.length} plant{filteredPlantsA.length !== 1 ? 's' : ''} found
             </div>
-            
-            {showDropdownA && (
-              <div className="dropdown-menu">
-                {filteredPlantsA.map((plant) => (
-                  <div
-                    key={plant.id}
-                    className="dropdown-item"
-                    onClick={() => {
-                      setPlantA(plant);
-                      setSearchA('');
-                      setShowDropdownA(false);
-                    }}
-                  >
-                    <span className="plant-icon">{plant.icon}</span>
-                    <div className="plant-info">
-                      <span className="plant-name">{plant.name}</span>
-                      <span className="plant-common">({plant.commonName})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         <div className="vs-divider">
@@ -144,50 +178,49 @@ const Compare = () => {
 
         <div className="selector-card">
           <label>Plant B</label>
-          <div className="dropdown-container">
-            <div className="search-input-wrapper" onClick={() => setShowDropdownB(true)}>
-              <Search size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Select plant B..."
-                value={plantB ? `${plantB.icon} ${plantB.name}` : searchB}
-                onChange={(e) => {
-                  setSearchB(e.target.value);
-                  setPlantB(null);
-                  setShowDropdownB(true);
-                }}
-                onFocus={() => setShowDropdownB(true)}
-              />
-              <ChevronDown size={18} />
+          <input
+            type="text"
+            placeholder="Search plants..."
+            value={searchQueryB}
+            onChange={(e) => setSearchQueryB(e.target.value)}
+            className="search-input"
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              marginBottom: '0.5rem',
+              border: '1px solid var(--border-color)',
+              borderRadius: '4px',
+              fontSize: '0.9rem'
+            }}
+          />
+          <select 
+            value={plantB} 
+            onChange={(e) => setPlantB(e.target.value)}
+            className="plant-select"
+          >
+            <option value="">Select a plant...</option>
+            {filteredPlantsB.map((plantName) => (
+              <option key={plantName} value={plantName}>
+                {plantName}
+              </option>
+            ))}
+          </select>
+          {searchQueryB && (
+            <div style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: 'var(--text-secondary)' }}>
+              {filteredPlantsB.length} plant{filteredPlantsB.length !== 1 ? 's' : ''} found
             </div>
-            
-            {showDropdownB && (
-              <div className="dropdown-menu">
-                {filteredPlantsB.map((plant) => (
-                  <div
-                    key={plant.id}
-                    className="dropdown-item"
-                    onClick={() => {
-                      setPlantB(plant);
-                      setSearchB('');
-                      setShowDropdownB(false);
-                    }}
-                  >
-                    <span className="plant-icon">{plant.icon}</span>
-                    <div className="plant-info">
-                      <span className="plant-name">{plant.name}</span>
-                      <span className="plant-common">({plant.commonName})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
       {/* Comparison Display */}
-      {plantA && plantB && (
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>Loading comparison...</p>
+        </div>
+      )}
+      
+      {plantADetails && plantBDetails && comparison && !loading && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -197,63 +230,67 @@ const Compare = () => {
           <div className="comparison-summary">
             <h3>Comparison Summary</h3>
             <p>{compareTraits()}</p>
+            {comparison.recommendation && (
+              <p style={{ marginTop: '0.5rem', fontStyle: 'italic', color: 'var(--primary-green)' }}>
+                💡 {comparison.recommendation}
+              </p>
+            )}
           </div>
 
           {/* Side-by-Side Cards */}
           <div className="comparison-cards">
             <div className="plant-card">
               <div className="plant-card-header" style={{ background: 'linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%)' }}>
-                <span className="plant-icon-large">{plantA.icon}</span>
-                <h3>{plantA.commonName}</h3>
-                <p className="scientific-name">{plantA.name}</p>
+                <span className="plant-icon-large">🌿</span>
+                <h3>{plantA}</h3>
+                <p className="scientific-name">Cluster {plantADetails.cluster}</p>
               </div>
               <div className="plant-card-body">
-                <TraitRow label="Perenniality" value={plantA.perenniality} icon="🔄" />
-                <TraitRow label="Woodiness" value={plantA.woodiness} icon="🌳" />
-                <TraitRow label="Pollination" value={plantA.pollinationType} icon="🐝" />
-                <TraitRow label="Genome Size" value={`${plantA.genomeSize} Mb`} icon="🧬" />
-                <TraitRow label="Growth Form" value={plantA.growthForm} icon="🌱" />
-                <TraitRow label="Root Depth" value={plantA.rootDepth} icon="🌿" />
-                <TraitRow label="Lifespan" value={plantA.lifespan} icon="⏳" />
-                <TraitRow label="Optimal Zone" value={plantA.optimalZone} icon="📍" />
-                <TraitRow label="Soil Type" value={plantA.soilPreference} icon="🪨" />
-                <TraitRow label="Rainfall" value={plantA.environmentalFactor.rainfall} icon="💧" />
-                <TraitRow label="Temperature" value={plantA.environmentalFactor.temperature} icon="🌡️" />
+                <TraitRow label="Hybridization Score" value={plantADetails.hybridization_score.toFixed(2)} icon="🧬" />
+                <TraitRow label="Climate Zone" value={plantADetails.climate_zone} icon="🌍" />
+                <TraitRow label="Cluster" value={plantADetails.cluster} icon="📊" />
               </div>
             </div>
 
             <div className="plant-card">
               <div className="plant-card-header" style={{ background: 'linear-gradient(135deg, var(--primary-brown) 0%, var(--accent-brown) 100%)' }}>
-                <span className="plant-icon-large">{plantB.icon}</span>
-                <h3>{plantB.commonName}</h3>
-                <p className="scientific-name">{plantB.name}</p>
+                <span className="plant-icon-large">🌿</span>
+                <h3>{plantB}</h3>
+                <p className="scientific-name">Cluster {plantBDetails.cluster}</p>
               </div>
               <div className="plant-card-body">
-                <TraitRow label="Perenniality" value={plantB.perenniality} icon="🔄" />
-                <TraitRow label="Woodiness" value={plantB.woodiness} icon="🌳" />
-                <TraitRow label="Pollination" value={plantB.pollinationType} icon="🐝" />
-                <TraitRow label="Genome Size" value={`${plantB.genomeSize} Mb`} icon="🧬" />
-                <TraitRow label="Growth Form" value={plantB.growthForm} icon="🌱" />
-                <TraitRow label="Root Depth" value={plantB.rootDepth} icon="🌿" />
-                <TraitRow label="Lifespan" value={plantB.lifespan} icon="⏳" />
-                <TraitRow label="Optimal Zone" value={plantB.optimalZone} icon="📍" />
-                <TraitRow label="Soil Type" value={plantB.soilPreference} icon="🪨" />
-                <TraitRow label="Rainfall" value={plantB.environmentalFactor.rainfall} icon="💧" />
-                <TraitRow label="Temperature" value={plantB.environmentalFactor.temperature} icon="🌡️" />
+                <TraitRow label="Hybridization Score" value={plantBDetails.hybridization_score.toFixed(2)} icon="🧬" />
+                <TraitRow label="Climate Zone" value={plantBDetails.climate_zone} icon="🌍" />
+                <TraitRow label="Cluster" value={plantBDetails.cluster} icon="📊" />
               </div>
             </div>
           </div>
 
-          {/* Numerical Comparison Chart */}
+          {/* Compatibility Metrics */}
           <div className="chart-section">
-            <h3>Resistance & Performance Metrics</h3>
+            <h3>Compatibility Analysis</h3>
+            <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div>
+                  <strong>Distance:</strong> {comparison.distance.toFixed(2)}
+                </div>
+                <div>
+                  <strong>Compatibility:</strong> {comparison.compatibility}
+                </div>
+                <div>
+                  <strong>Same Cluster:</strong> {comparison.same_cluster ? '✅ Yes' : '❌ No'}
+                </div>
+              </div>
+            </div>
+            
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={getNumericalComparisonData()}>
                 <XAxis dataKey="trait" angle={-15} textAnchor="end" height={100} tick={{ fontSize: 12 }} />
                 <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="plantA" name={plantA.commonName} fill="var(--primary-green)" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="plantB" name={plantB.commonName} fill="var(--primary-brown)" radius={[8, 8, 0, 0]} />
+                <Legend />
+                <Bar dataKey="plantA" name={plantA} fill="var(--primary-green)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="plantB" name={plantB} fill="var(--primary-brown)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
