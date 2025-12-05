@@ -25,7 +25,6 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from config.chatbot_prompt import chatbot_config, get_response_template
 from config.chatbot_tools import chatbot_tools, execute_tool
-from services.ai_service import GeminiService, get_ai_service
 
 # Try to import Claude service
 try:
@@ -35,10 +34,18 @@ except ImportError:
     CLAUDE_AVAILABLE = False
     print("⚠️  Claude service not available (anthropic package not installed)")
 
+# Try to import Dynamic Gemini service
+try:
+    from services.gemini_dynamic import DynamicGeminiService
+    GEMINI_DYNAMIC_AVAILABLE = True
+except ImportError:
+    GEMINI_DYNAMIC_AVAILABLE = False
+    print("⚠️  Gemini service not available (google-generativeai not installed)")
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-# Initialize AI services (priority order: Claude > Gemini > Fallback)
+# Initialize AI services (priority order: Claude > Gemini Dynamic > Fallback)
 claude_service = None
 gemini_service = None
 
@@ -50,15 +57,15 @@ if CLAUDE_AVAILABLE:
     except Exception as e:
         print(f"⚠️  Claude service initialization failed: {e}")
 
-# Try Gemini as fallback
-if not claude_service:
+# Try Dynamic Gemini as fallback
+if not claude_service and GEMINI_DYNAMIC_AVAILABLE:
     try:
-        gemini_service = GeminiService()
-        print("✅ Gemini AI service initialized successfully")
+        gemini_service = DynamicGeminiService()
+        print("✅ Gemini AI (Dynamic) service initialized successfully")
+        print(f"   Model: {gemini_service.model._model_name}")
+        print(f"   Features: System instruction, Chat history, Streaming, Safety settings")
     except Exception as e:
-        gemini_service = None
-        print(f"⚠️  Gemini service not available: {e}")
-        print("   Install with: pip install google-generativeai")
+        print(f"⚠️  Gemini service initialization failed: {e}")
 
 if not claude_service and not gemini_service:
     print("🟡 Using flexible fallback response system")
@@ -95,13 +102,13 @@ def chat():
                 "success": False
             }), 400
         
-        # Use flexible chatbot logic (prioritize: Claude > Gemini > Fallback)
+        # Use AI service (priority: Claude > Gemini Dynamic > Fallback)
         if claude_service:
             response = claude_service.chat(user_message, conversation_history)
             service_name = "Claude AI (Sonnet 4)"
         elif gemini_service:
             response = gemini_service.chat(user_message, conversation_history)
-            service_name = "Gemini AI"
+            service_name = f"Gemini AI Dynamic ({gemini_service.model._model_name})"
         else:
             from services.ai_service import simple_chat_response
             response = simple_chat_response(user_message)
