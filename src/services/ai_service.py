@@ -418,186 +418,136 @@ def get_ai_service(service_type: str = "gemini") -> ChatbotAIService:
 # Simple fallback function for testing without API
 def simple_chat_response(user_message: str) -> str:
     """
-    Enhanced rule-based response system using comprehensive data.
-    Provides detailed answers using all available plant, zone, and historical data.
+    Flexible, intelligent response system that dynamically queries data based on user intent.
+    Uses natural language understanding to provide contextual, relevant answers.
     
     Args:
         user_message: User's message
         
     Returns:
-        Response text with specific data from the database
+        Dynamic response based on available data
     """
     from config.chatbot_tools import execute_tool, COMPREHENSIVE_PLANTS, ALGERIA_ZONES
     
     message_lower = user_message.lower()
     
-    # Handle drought/resistance queries with detailed data
-    if "drought" in message_lower or "dry" in message_lower or "water" in message_lower:
-        # Get plants sorted by drought resistance
-        drought_plants = sorted(
-            COMPREHENSIVE_PLANTS,
-            key=lambda p: p["resistance"]["drought"],
-            reverse=True
-        )[:3]
-        
-        response = "**Best Plants for Drought Conditions:**\n\n"
-        for i, plant in enumerate(drought_plants, 1):
-            response += f"{i}. **{plant['name']} ({plant['scientific_name']})**\n"
-            response += f"   - Drought Resistance: {plant['resistance']['drought']}/10\n"
-            response += f"   - Drought Tolerance: {plant['environmental_factor']['drought_tolerance']}\n"
-            response += f"   - Rainfall Needs: {plant['environmental_factor']['rainfall']}\n"
-            response += f"   - Root Depth: {plant['root_depth']} (deeper roots access more water)\n"
-            response += f"   - Zone: {plant['zone']}\n"
-            response += f"   - Key Traits: {', '.join(plant['traits'][:3])}\n\n"
-        
-        return response
+    # Dynamically extract what the user is asking about
     
-    # Handle plant search with comprehensive data
-    if "search" in message_lower or "find plant" in message_lower or "tell me about" in message_lower:
-        import re
-        search_term = re.sub(r'search|find plant|tell me about|for', '', user_message, flags=re.IGNORECASE).strip()
-        results = execute_tool("search_plants", query=search_term)
-        
-        if results:
-            plant = results[0]  # Get first result
-            response = f"# {plant['name']} ({plant['scientific_name']}) {plant.get('icon', '')}\n\n"
-            response += f"**Basic Information:**\n"
-            response += f"- Zone: {plant['zone']}\n"
-            response += f"- Perenniality: {plant['perenniality']}\n"
-            response += f"- Pollination: {plant['pollination_type']}\n"
-            response += f"- Genome Size: {plant['genome_size']:,} Mbp\n\n"
-            
-            response += f"**Environmental Requirements:**\n"
-            response += f"- Rainfall: {plant['environmental_factor']['rainfall']}\n"
-            response += f"- Temperature: {plant['environmental_factor']['temperature']}\n"
-            response += f"- Drought Tolerance: {plant['environmental_factor']['drought_tolerance']}\n\n"
-            
-            response += f"**Resistance Scores:**\n"
-            response += f"- Drought: {plant['resistance']['drought']}/10\n"
-            response += f"- Salinity: {plant['resistance']['salinity']}/10\n"
-            response += f"- Disease: {plant['resistance']['disease']}/10\n\n"
-            
-            response += f"**Growth Characteristics:**\n"
-            response += f"- Form: {plant['growth_form']}\n"
-            response += f"- Root Depth: {plant['root_depth']}\n"
-            response += f"- Lifespan: {plant['lifespan']}\n"
-            response += f"- Soil Preference: {plant['soil_preference']}\n\n"
-            
-            response += f"**Agronomic Potential:**\n"
-            response += f"- Yield Potential: {plant['yield_potential']}/10\n"
-            response += f"- Genetic Diversity: {plant['genetic_diversity']}/10\n"
-            
-            if len(results) > 1:
-                response += f"\n*Found {len(results)} total matches. Use search to explore others.*"
-            
-            return response
-        return f"I couldn't find any plants matching '{search_term}'. Available plants: {', '.join([p['name'] for p in COMPREHENSIVE_PLANTS])}"
+    # Check if asking about specific plant
+    plant_keywords = ["wheat", "barley", "corn", "maize", "sorghum", "alfalfa", "triticum", "hordeum", "zea", "medicago"]
+    mentioned_plant = None
+    for keyword in plant_keywords:
+        if keyword in message_lower:
+            results = execute_tool("search_plants", query=keyword)
+            if results:
+                mentioned_plant = results[0]
+                break
     
-    # Handle zone queries with detailed climate data
-    if any(zone in message_lower for zone in ["zone", "northern", "plateau", "sahara", "climate"]):
-        zone = "Northern"
-        if "plateau" in message_lower or "high plateau" in message_lower:
-            zone = "High Plateau"
-        elif "sahara" in message_lower or "southern" in message_lower or "desert" in message_lower:
-            zone = "Sahara"
-        
-        zone_info = execute_tool("get_zone_details", zone_name=zone)
-        stats = execute_tool("get_zone_statistics", zone=zone)
-        
-        if zone_info:
-            response = f"# {zone_info['full_name']}\n\n"
-            response += f"**Climate Conditions:**\n"
-            response += f"- Rainfall: {zone_info['climate']['rainfall']} annually\n"
-            response += f"- Temperature Range: {zone_info['climate']['temperature']}\n"
-            response += f"- Humidity: {zone_info['climate']['humidity']}\n\n"
-            
-            response += f"**Soil Characteristics:**\n"
-            response += f"- Type: {zone_info['soil_type']}\n\n"
-            
-            response += f"**Stress Factors:**\n"
-            for factor in zone_info['stress_factors']:
-                response += f"- {factor}\n"
-            
-            response += f"\n**Suitable Plants ({stats['plant_count']} species):**\n"
-            for plant_info in stats['plants']:
-                response += f"- {plant_info['name']} ({plant_info['scientific_name']})\n"
-            
-            response += f"\n**Suitability Score: {zone_info['suitability_score']}/10**\n"
-            
-            if stats['common_traits']:
-                response += f"\n**Common Traits in this Zone:**\n"
-                for trait_info in stats['common_traits'][:3]:
-                    response += f"- {trait_info['trait'].replace('_', ' ').title()} ({trait_info['count']} plants)\n"
-            
+    # Check if asking about specific zone
+    zone_keywords = {"northern": "Northern", "coastal": "Northern", "plateau": "High Plateau", 
+                     "high plateau": "High Plateau", "sahara": "Sahara", "desert": "Sahara", "south": "Sahara"}
+    mentioned_zone = None
+    for keyword, zone_name in zone_keywords.items():
+        if keyword in message_lower:
+            mentioned_zone = zone_name
+            break
+    
+    # Flexible query handling
+    
+    # 1. Asking about specific trait or condition
+    if any(word in message_lower for word in ["drought", "dry", "water", "arid"]):
+        if mentioned_plant:
+            return f"{mentioned_plant['name']} has a drought resistance of {mentioned_plant['resistance']['drought']}/10 and requires {mentioned_plant['environmental_factor']['rainfall']} of rainfall annually. It's classified as having {mentioned_plant['environmental_factor']['drought_tolerance']} drought tolerance with roots reaching {mentioned_plant['root_depth']} deep to access water."
+        else:
+            # Dynamically find best drought-resistant plants
+            drought_plants = sorted(COMPREHENSIVE_PLANTS, key=lambda p: p["resistance"]["drought"], reverse=True)
+            response = "For drought conditions, I recommend:\n\n"
+            for i, plant in enumerate(drought_plants[:3], 1):
+                response += f"{i}. {plant['name']} - {plant['resistance']['drought']}/10 drought resistance ({plant['environmental_factor']['drought_tolerance']} tolerance)\n"
             return response
     
-    # Handle prediction/hybridization queries
-    if "predict" in message_lower or "hybrid" in message_lower or "cross" in message_lower:
-        predictions = execute_tool("get_historical_predictions")
-        response = "**Recent Hybridization Predictions:**\n\n"
-        
-        for pred in predictions[:3]:
-            response += f"• {pred['plant_a']} × {pred['plant_b']}\n"
-            response += f"  Success Rate: {pred['success_rate']}%\n"
-            response += f"  Confidence: {pred['confidence']:.0%}\n"
-            response += f"  Zone: {pred['zone']}\n"
-            response += f"  Date: {pred['date']}\n\n"
-        
-        response += "\nTo predict a specific cross, use our Predict feature or ask about two specific plants!"
-        return response
+    # 2. Asking about yield or production
+    if any(word in message_lower for word in ["yield", "production", "harvest", "productive"]):
+        if mentioned_plant:
+            return f"{mentioned_plant['name']} has a yield potential of {mentioned_plant['yield_potential']}/10, making it {'excellent' if mentioned_plant['yield_potential'] >= 8 else 'good' if mentioned_plant['yield_potential'] >= 6 else 'moderate'} for production. Its genetic diversity score is {mentioned_plant['genetic_diversity']}/10."
+        else:
+            high_yield = sorted(COMPREHENSIVE_PLANTS, key=lambda p: p["yield_potential"], reverse=True)
+            plants_str = ', '.join([f"{p['name']} ({p['yield_potential']}/10)" for p in high_yield[:3]])
+            return f"Highest yielding plants: {plants_str}"
     
-    # Handle trait queries
-    if "trait" in message_lower:
-        response = "**Plant Traits in Our Database:**\n\n"
-        all_traits = set()
-        for plant in COMPREHENSIVE_PLANTS:
-            all_traits.update(plant['traits'])
-        
-        response += "Key genetic traits tracked:\n"
-        for trait in sorted(all_traits):
-            response += f"- {trait.replace('_', ' ').title()}\n"
-        
-        response += "\nThese traits influence hybridization success, yield potential, and environmental adaptation."
-        return response
+    # 3. Asking about resistance (disease, salinity, etc.)
+    if "resistance" in message_lower or "disease" in message_lower:
+        if mentioned_plant:
+            r = mentioned_plant['resistance']
+            return f"{mentioned_plant['name']} resistance profile: Drought {r['drought']}/10, Salinity {r['salinity']}/10, Disease {r['disease']}/10"
+        else:
+            return "Ask me about a specific plant's resistance, or tell me which type of resistance matters most (drought, salinity, or disease)."
     
-    # Handle statistics/KPI queries
-    if "statistics" in message_lower or "stats" in message_lower or "kpi" in message_lower or "dashboard" in message_lower:
-        kpis = execute_tool("get_dashboard_kpis")
-        trending = execute_tool("get_trending_species")
-        
-        response = "**Zer3aZ Platform Statistics:**\n\n"
-        response += f"- Total Plant Species: {kpis['total_plants']}\n"
-        response += f"- Tracked Traits: {kpis['total_traits']}\n"
-        response += f"- Average Success Rate: {kpis['avg_success_rate']}%\n"
-        response += f"- Predictions Today: {kpis['predictions_today']}\n"
-        response += f"- Top Zone Today: {kpis['top_zone_today']}\n\n"
-        
-        response += "**Trending Species (by usage):**\n"
-        for species in trending[:5]:
-            response += f"- {species['name']}: {species['uses']} uses\n"
-        
-        return response
+    # 4. Asking about zone/climate
+    if any(word in message_lower for word in ["zone", "climate", "region", "area", "grow", "suitable"]):
+        if mentioned_zone:
+            zone_info = execute_tool("get_zone_details", zone_name=mentioned_zone)
+            plants = execute_tool("get_plants_by_zone", zone=mentioned_zone)
+            plant_names = ', '.join([p['name'] for p in plants])
+            return f"{zone_info['full_name']}: {zone_info['climate']['rainfall']} rainfall, {zone_info['climate']['temperature']} temperature. Suitable plants: {plant_names}"
+        elif mentioned_plant:
+            return f"{mentioned_plant['name']} thrives in the {mentioned_plant['zone']} zone with {mentioned_plant['environmental_factor']['rainfall']} rainfall and {mentioned_plant['environmental_factor']['temperature']} temperatures."
+        else:
+            zone_names = ', '.join([z['name'] for z in ALGERIA_ZONES])
+            return f"I have data on {len(ALGERIA_ZONES)} climate zones: {zone_names}. Which one interests you?"
     
-    # Handle help
-    if "help" in message_lower or "what can you do" in message_lower:
-        response = chatbot_config["response_templates"]["general_help"]
-        response += "\n\n**Available Data:**\n"
-        response += f"- {len(COMPREHENSIVE_PLANTS)} plant species with complete genetic profiles\n"
-        response += f"- {len(ALGERIA_ZONES)} climate zones across Algeria\n"
-        response += "- Historical prediction data\n"
-        response += "- Trending species statistics\n"
-        response += "\n**Ask me about:**\n"
-        response += "- Specific plants (e.g., 'Tell me about wheat')\n"
-        response += "- Climate zones (e.g., 'What grows in the Sahara?')\n"
-        response += "- Drought resistance (e.g., 'Best plants for dry conditions')\n"
-        response += "- Predictions (e.g., 'What are recent hybridization results?')\n"
-        response += "- Statistics (e.g., 'Show me platform statistics')\n"
-        return response
+    # 5. Asking about specific plant details
+    if mentioned_plant and any(word in message_lower for word in ["about", "tell", "info", "detail", "what is", "describe"]):
+        p = mentioned_plant
+        return f"{p['icon']} **{p['name']}** ({p['scientific_name']})\n\nZone: {p['zone']} | Genome: {p['genome_size']:,} Mbp | Pollination: {p['pollination_type']}\nRainfall: {p['environmental_factor']['rainfall']} | Temp: {p['environmental_factor']['temperature']}\nDrought: {p['resistance']['drought']}/10 | Yield: {p['yield_potential']}/10 | Diversity: {p['genetic_diversity']}/10\nSoil: {p['soil_preference']}"
     
-    # Default: Show available plants
-    response = "I have comprehensive data on **6 plant species**:\n\n"
-    for plant in COMPREHENSIVE_PLANTS:
-        response += f"{plant['icon']} **{plant['name']}** ({plant['scientific_name']}) - {plant['zone']} zone\n"
+    # 6. Asking about hybridization/crossing
+    if any(word in message_lower for word in ["hybrid", "cross", "breed", "combine"]):
+        if "history" in message_lower or "recent" in message_lower or "past" in message_lower:
+            predictions = execute_tool("get_historical_predictions")
+            return f"Recent crosses: {predictions[0]['plant_a']} × {predictions[0]['plant_b']} = {predictions[0]['success_rate']}% success | {predictions[1]['plant_a']} × {predictions[1]['plant_b']} = {predictions[1]['success_rate']}% | {predictions[2]['plant_a']} × {predictions[2]['plant_b']} = {predictions[2]['success_rate']}%"
+        else:
+            return "To predict a hybrid, tell me which two plants you want to cross, or ask about recent hybridization results."
     
-    response += "\nAsk me about any plant, climate zone, drought tolerance, or hybridization predictions!"
-    return response
+    # 7. Asking about statistics/trending
+    if any(word in message_lower for word in ["popular", "trending", "most used", "common", "statistics", "stats"]):
+        if "plant" in message_lower:
+            trending = execute_tool("get_trending_species")
+            trending_str = ', '.join([f"{s['name']} ({s['uses']} uses)" for s in trending[:3]])
+            return f"Most used species: {trending_str}"
+        else:
+            kpis = execute_tool("get_dashboard_kpis")
+            return f"Platform stats: {kpis['total_plants']} plants, {kpis['avg_success_rate']}% avg success, {kpis['predictions_today']} predictions today, top zone: {kpis['top_zone_today']}"
+    
+    # 8. Asking comparison questions
+    if any(word in message_lower for word in ["compare", "difference", "better", "vs", "versus"]):
+        plants_found = [p for p in COMPREHENSIVE_PLANTS if p['name'].lower() in message_lower or p['scientific_name'].lower() in message_lower]
+        if len(plants_found) >= 2:
+            p1, p2 = plants_found[0], plants_found[1]
+            return f"{p1['name']} vs {p2['name']}: Drought ({p1['resistance']['drought']} vs {p2['resistance']['drought']}), Yield ({p1['yield_potential']} vs {p2['yield_potential']}), Zone ({p1['zone']} vs {p2['zone']})"
+        return "Tell me which two plants you want to compare."
+    
+    # 9. Asking "best" or "recommend"
+    if any(word in message_lower for word in ["best", "recommend", "suggest", "should", "good"]):
+        # Try to infer criteria from context
+        if mentioned_zone:
+            plants = execute_tool("get_plants_by_zone", zone=mentioned_zone)
+            plant_names = ', '.join([p['name'] for p in plants])
+            return f"For {mentioned_zone} zone: {plant_names}"
+        elif "yield" in message_lower:
+            best = max(COMPREHENSIVE_PLANTS, key=lambda p: p['yield_potential'])
+            return f"For highest yield: {best['name']} ({best['yield_potential']}/10)"
+        elif "drought" in message_lower or "dry" in message_lower:
+            best = max(COMPREHENSIVE_PLANTS, key=lambda p: p['resistance']['drought'])
+            return f"For drought resistance: {best['name']} ({best['resistance']['drought']}/10)"
+        else:
+            return "What's most important to you? Drought resistance, high yield, specific climate zone, or disease resistance?"
+    
+    # 10. General help or unclear intent
+    if any(word in message_lower for word in ["help", "can you", "how", "what can"]):
+        return f"I can help you with:\n• Details about {len(COMPREHENSIVE_PLANTS)} plant species\n• Climate zones and suitability\n• Drought, yield, and resistance comparisons\n• Hybridization predictions\n• Platform statistics\n\nJust ask naturally!"
+    
+    # Default: Show what's available and ask for clarification
+    available_plants = ", ".join([p['name'] for p in COMPREHENSIVE_PLANTS])
+    return f"I have data on: {available_plants}. I can also tell you about climate zones, drought resistance, yield potential, or hybridization. What would you like to know?"
+
