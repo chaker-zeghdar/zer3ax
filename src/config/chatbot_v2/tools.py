@@ -107,14 +107,25 @@ def extract_keywords(question: str) -> Dict:
     """Extract keywords from question"""
     q = question.lower()
     
-    # Extract plant names
-    plants = [p["commonName"] for p in PLANTS_DATA if p["commonName"].lower() in q or p["name"].lower() in q]
+    # Extract plant names (more flexible matching)
+    plants = []
+    for p in PLANTS_DATA:
+        # Check common name and scientific name
+        if (p["commonName"].lower() in q or 
+            p["name"].lower() in q or
+            any(word in q for word in p["commonName"].lower().split()) or
+            "wheat" in q and "wheat" in p["commonName"].lower() or
+            "barley" in q and p["commonName"] == "Barley" or
+            "corn" in q and p["commonName"] == "Corn" or
+            "sorghum" in q and p["commonName"] == "Sorghum" or
+            "alfalfa" in q and p["commonName"] == "Alfalfa"):
+            plants.append(p["commonName"])
     
     # Extract zones
     zones = []
-    if "northern" in q or "coastal" in q: zones.append("Northern")
+    if "northern" in q or "coastal" in q or "north" in q: zones.append("Northern")
     if "plateau" in q or "high plateau" in q: zones.append("High Plateau")
-    if "sahara" in q or "southern" in q or "desert" in q: zones.append("Sahara")
+    if "sahara" in q or "southern" in q or "desert" in q or "south" in q: zones.append("Sahara")
     
     # Extract traits
     traits = []
@@ -127,6 +138,7 @@ def extract_keywords(question: str) -> Dict:
     if any(w in q for w in ["best", "recommend"]): qtype = "recommendation"
     elif any(w in q for w in ["highest", "most", "rank"]): qtype = "ranking"
     elif any(w in q for w in ["compare", "vs", "difference"]): qtype = "comparison"
+    elif any(w in q for w in ["what", "tell", "about", "info"]): qtype = "what"
     
     return {"plants": plants, "zones": zones, "traits": traits, "type": qtype, "original": question}
 

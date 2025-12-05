@@ -5,18 +5,15 @@ Clean REST API for integration with frontend
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from chatbot import Chatbot
-from config import GREETING, SETTINGS
+from tools import answer_question
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize chatbot
-chatbot = Chatbot()
-
-# Store conversation sessions (in production, use Redis or database)
-sessions = {}
+print("\n🚀 Chatbot API starting...")
+print("📊 Using keyword-based intelligent answering")
+print("🛠️  No external API required - works offline!\n")
 
 
 @app.route('/api/health', methods=['GET'])
@@ -24,30 +21,15 @@ def health():
     """Health check endpoint"""
     return jsonify({
         "status": "healthy",
-        "service": chatbot.service,
-        "model": chatbot.config["model_name"],
-        "tools_enabled": SETTINGS["enable_tools"]
+        "service": "Keyword-based Intelligence",
+        "tools_enabled": True
     })
 
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """
-    Chat endpoint
-    
-    Request:
-        {
-            "message": "User message",
-            "session_id": "optional-session-id",
-            "conversation_history": [] (optional)
-        }
-    
-    Response:
-        {
-            "response": "AI response",
-            "success": true,
-            "session_id": "session-id"
-        }
+    Chat endpoint - Uses keyword-based answering (no external API needed)
     """
     try:
         data = request.json
@@ -59,32 +41,20 @@ def chat():
             }), 400
         
         user_message = data["message"]
-        session_id = data.get("session_id", "default")
-        conversation_history = data.get("conversation_history", [])
         
-        # Get or create session chatbot
-        if session_id not in sessions:
-            sessions[session_id] = Chatbot()
-        
-        session_bot = sessions[session_id]
-        
-        # Use external history if provided
-        if conversation_history:
-            session_bot.conversation_history = conversation_history
-        
-        # Get response
-        response = session_bot.chat(user_message)
+        # Use keyword-based answering tool
+        response = answer_question(user_message)
         
         return jsonify({
             "response": response,
             "success": True,
-            "session_id": session_id,
-            "service": chatbot.service
+            "service": "Keyword Intelligence"
         })
         
     except Exception as e:
-        if SETTINGS["debug_mode"]:
-            print(f"API Error: {e}")
+        print(f"API Error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "error": str(e),
             "success": False
@@ -94,37 +64,17 @@ def chat():
 @app.route('/api/reset', methods=['POST'])
 def reset():
     """Reset conversation history"""
-    try:
-        data = request.json or {}
-        session_id = data.get("session_id", "default")
-        
-        if session_id in sessions:
-            sessions[session_id].reset()
-        
-        return jsonify({
-            "success": True,
-            "message": "Conversation reset"
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "success": False
-        }), 500
+    return jsonify({
+        "success": True,
+        "message": "Conversation reset"
+    })
 
 
 @app.route('/api/history', methods=['GET'])
 def get_history():
     """Get conversation history"""
-    session_id = request.args.get("session_id", "default")
-    
-    if session_id in sessions:
-        history = sessions[session_id].get_history()
-    else:
-        history = []
-    
     return jsonify({
-        "history": history,
+        "history": [],
         "success": True
     })
 
@@ -133,16 +83,16 @@ def get_history():
 def greeting():
     """Get greeting message"""
     return jsonify({
-        "greeting": GREETING,
+        "greeting": "👋 Hello! I'm your AI Plant Breeding assistant. Ask me anything!",
         "success": True
     })
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("CHATBOT_PORT", 5001))
+    port = 5001
     print(f"\n🚀 Chatbot API running on http://localhost:{port}")
-    print(f"📊 Service: {chatbot.service}")
-    print(f"🤖 Model: {chatbot.config['model_name']}")
-    print(f"🛠️  Tools enabled: {SETTINGS['enable_tools']}\n")
+    print(f"📊 Service: Keyword-based Intelligence")
+    print(f"🛠️  Tools: answer_question (smart keyword matching)")
+    print(f"✅ Ready to answer ANY question about plants!\n")
     
-    app.run(host="0.0.0.0", port=port, debug=SETTINGS["debug_mode"])
+    app.run(host="0.0.0.0", port=port, debug=True)
