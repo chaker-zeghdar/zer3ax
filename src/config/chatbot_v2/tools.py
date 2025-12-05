@@ -249,8 +249,9 @@ def extract_keywords(question: str) -> Dict:
     # Detect question type (multi-language + Algerian dialect)
     qtype = "general"
     
-    # Recommendation (+ Algerian: a7san, khir, nsah)
-    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح", "a7san", "khir", "khayr", "nsah", "nsi7a"]):
+    # Recommendation (+ Algerian: a7san, khir, nsah, nebta, zar3a)
+    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح", "a7san", "khir", "khayr", "nsah", "nsi7a",
+                            "nebta", "nabta", "zar3a", "zra3a", "nabat"]):
         qtype = "recommendation"
     
     # Ranking (+ Algerian: tartib, classement)
