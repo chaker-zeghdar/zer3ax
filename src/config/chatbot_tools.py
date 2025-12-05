@@ -8,55 +8,279 @@ to provide dynamic responses and interact with the platform's features.
 from typing import Dict, List, Optional, Any
 
 
-# Sample plant data (replace with actual data source)
-SAMPLE_PLANTS = [
+# Comprehensive plant database with all available data from mockData.js
+COMPREHENSIVE_PLANTS = [
     {
         "id": 1,
-        "name": "Common Wheat",
+        "name": "Bread Wheat",
         "scientific_name": "Triticum aestivum",
+        "icon": "🌾",
         "zone": "Northern",
-        "traits": ["drought_resistance", "high_yield", "disease_resistance"]
+        "traits": ["drought_resistance", "high_yield", "disease_resistance", "wind_pollination"],
+        "perenniality": "Annual",
+        "woodiness": "Herbaceous",
+        "pollination_type": "Wind",
+        "genome_size": 17000,
+        "environmental_factor": {
+            "rainfall": "400-600mm",
+            "temperature": "15-25°C",
+            "drought_tolerance": "Moderate"
+        },
+        "growth_form": "Erect",
+        "root_depth": "1.5-2m",
+        "resistance": {
+            "drought": 6,
+            "salinity": 4,
+            "disease": 7
+        },
+        "lifespan": "1 year",
+        "soil_preference": "Loamy, well-drained",
+        "yield_potential": 8,
+        "genetic_diversity": 7
     },
     {
         "id": 2,
         "name": "Barley",
         "scientific_name": "Hordeum vulgare",
-        "zone": "Northern",
-        "traits": ["cold_tolerance", "drought_resistance", "adaptability"]
+        "icon": "🌾",
+        "zone": "High Plateau",
+        "traits": ["cold_tolerance", "drought_resistance", "adaptability", "self_pollination", "high_salinity_tolerance"],
+        "perenniality": "Annual",
+        "woodiness": "Herbaceous",
+        "pollination_type": "Self",
+        "genome_size": 5100,
+        "environmental_factor": {
+            "rainfall": "300-500mm",
+            "temperature": "12-22°C",
+            "drought_tolerance": "High"
+        },
+        "growth_form": "Erect",
+        "root_depth": "1-1.5m",
+        "resistance": {
+            "drought": 8,
+            "salinity": 7,
+            "disease": 6
+        },
+        "lifespan": "1 year",
+        "soil_preference": "Well-drained, tolerates alkaline",
+        "yield_potential": 7,
+        "genetic_diversity": 6
     },
     {
         "id": 3,
-        "name": "Durum Wheat",
-        "scientific_name": "Triticum durum",
-        "zone": "High Plateau",
-        "traits": ["high_protein", "drought_resistance", "heat_tolerance"]
+        "name": "Corn/Maize",
+        "scientific_name": "Zea mays",
+        "icon": "🌽",
+        "zone": "Northern",
+        "traits": ["high_yield", "wind_pollination", "high_genetic_diversity"],
+        "perenniality": "Annual",
+        "woodiness": "Herbaceous",
+        "pollination_type": "Wind",
+        "genome_size": 2300,
+        "environmental_factor": {
+            "rainfall": "500-800mm",
+            "temperature": "20-30°C",
+            "drought_tolerance": "Low"
+        },
+        "growth_form": "Erect",
+        "root_depth": "1-1.8m",
+        "resistance": {
+            "drought": 4,
+            "salinity": 3,
+            "disease": 5
+        },
+        "lifespan": "1 year",
+        "soil_preference": "Deep, fertile loam",
+        "yield_potential": 9,
+        "genetic_diversity": 8
     },
     {
         "id": 4,
         "name": "Sorghum",
         "scientific_name": "Sorghum bicolor",
+        "icon": "🌾",
         "zone": "Sahara",
-        "traits": ["extreme_drought_resistance", "heat_tolerance", "low_water_needs"]
+        "traits": ["extreme_drought_resistance", "heat_tolerance", "low_water_needs", "self_pollination"],
+        "perenniality": "Annual",
+        "woodiness": "Herbaceous",
+        "pollination_type": "Self",
+        "genome_size": 730,
+        "environmental_factor": {
+            "rainfall": "400-600mm",
+            "temperature": "25-35°C",
+            "drought_tolerance": "Very High"
+        },
+        "growth_form": "Erect",
+        "root_depth": "2-2.5m",
+        "resistance": {
+            "drought": 9,
+            "salinity": 6,
+            "disease": 7
+        },
+        "lifespan": "1 year",
+        "soil_preference": "Wide range, drought tolerant",
+        "yield_potential": 7,
+        "genetic_diversity": 8
+    },
+    {
+        "id": 5,
+        "name": "Durum Wheat",
+        "scientific_name": "Triticum durum",
+        "icon": "🌾",
+        "zone": "High Plateau",
+        "traits": ["high_protein", "drought_resistance", "heat_tolerance", "wind_pollination"],
+        "perenniality": "Annual",
+        "woodiness": "Herbaceous",
+        "pollination_type": "Wind",
+        "genome_size": 12000,
+        "environmental_factor": {
+            "rainfall": "350-550mm",
+            "temperature": "15-25°C",
+            "drought_tolerance": "Moderate"
+        },
+        "growth_form": "Erect",
+        "root_depth": "1.5-2m",
+        "resistance": {
+            "drought": 7,
+            "salinity": 5,
+            "disease": 6
+        },
+        "lifespan": "1 year",
+        "soil_preference": "Clay-loam",
+        "yield_potential": 7,
+        "genetic_diversity": 6
+    },
+    {
+        "id": 6,
+        "name": "Alfalfa",
+        "scientific_name": "Medicago sativa",
+        "icon": "🌿",
+        "zone": "Northern",
+        "traits": ["perennial", "deep_roots", "drought_resistance", "nitrogen_fixation", "insect_pollination"],
+        "perenniality": "Perennial",
+        "woodiness": "Herbaceous",
+        "pollination_type": "Insect",
+        "genome_size": 900,
+        "environmental_factor": {
+            "rainfall": "450-750mm",
+            "temperature": "15-28°C",
+            "drought_tolerance": "Moderate"
+        },
+        "growth_form": "Spreading",
+        "root_depth": "2-4m",
+        "resistance": {
+            "drought": 7,
+            "salinity": 6,
+            "disease": 7
+        },
+        "lifespan": "3-5 years",
+        "soil_preference": "Deep, well-drained",
+        "yield_potential": 8,
+        "genetic_diversity": 7
     }
 ]
+
+# Algeria climate zones with detailed information
+ALGERIA_ZONES = [
+    {
+        "id": 1,
+        "name": "Northern",
+        "full_name": "Northern / Coastal Zone",
+        "color": "#4CAF50",
+        "climate": {
+            "rainfall": "400-800mm",
+            "temperature": "10-30°C",
+            "humidity": "High"
+        },
+        "soil_type": "Clay-loam, fertile",
+        "stress_factors": ["Occasional drought", "High humidity diseases"],
+        "best_plants": [1, 3, 6],  # Wheat, Corn, Alfalfa
+        "suitability_score": 8.5,
+        "coordinates": {"lat": 36.7, "lng": 3.2}
+    },
+    {
+        "id": 2,
+        "name": "High Plateau",
+        "full_name": "High Plateau Zone",
+        "color": "#8B4513",
+        "climate": {
+            "rainfall": "200-400mm",
+            "temperature": "5-35°C",
+            "humidity": "Moderate"
+        },
+        "soil_type": "Sandy-loam, alkaline",
+        "stress_factors": ["Cold winters", "Water scarcity", "Salinity"],
+        "best_plants": [2, 5, 4],  # Barley, Durum Wheat, Sorghum
+        "suitability_score": 7.2,
+        "coordinates": {"lat": 34.8, "lng": 1.5}
+    },
+    {
+        "id": 3,
+        "name": "Sahara",
+        "full_name": "Southern / Sahara Zone",
+        "color": "#D2691E",
+        "climate": {
+            "rainfall": "50-200mm",
+            "temperature": "15-45°C",
+            "humidity": "Very Low"
+        },
+        "soil_type": "Sandy, poor organic matter",
+        "stress_factors": ["Extreme heat", "Severe drought", "Sand storms"],
+        "best_plants": [4],  # Sorghum only
+        "suitability_score": 4.8,
+        "coordinates": {"lat": 28.5, "lng": 2.8}
+    }
+]
+
+# Historical prediction data
+RECENT_PREDICTIONS = [
+    {"id": 1, "plant_a": "Triticum aestivum", "plant_b": "Hordeum vulgare", "success_rate": 78, "confidence": 0.89, "date": "2025-12-04", "zone": "Northern"},
+    {"id": 2, "plant_a": "Zea mays", "plant_b": "Sorghum bicolor", "success_rate": 45, "confidence": 0.72, "date": "2025-12-04", "zone": "High Plateau"},
+    {"id": 3, "plant_a": "Triticum durum", "plant_b": "Triticum aestivum", "success_rate": 92, "confidence": 0.95, "date": "2025-12-03", "zone": "Northern"},
+    {"id": 4, "plant_a": "Medicago sativa", "plant_b": "Triticum aestivum", "success_rate": 35, "confidence": 0.65, "date": "2025-12-03", "zone": "High Plateau"},
+    {"id": 5, "plant_a": "Hordeum vulgare", "plant_b": "Sorghum bicolor", "success_rate": 68, "confidence": 0.81, "date": "2025-12-02", "zone": "Sahara"}
+]
+
+# KPI and trending data
+KPI_DATA = {
+    "total_plants": 6,
+    "total_traits": 15,
+    "avg_success_rate": 72,
+    "predictions_today": 12,
+    "top_zone_today": "Northern"
+}
+
+TRENDING_SPECIES = [
+    {"name": "Triticum aestivum", "uses": 45},
+    {"name": "Hordeum vulgare", "uses": 38},
+    {"name": "Sorghum bicolor", "uses": 32},
+    {"name": "Zea mays", "uses": 28},
+    {"name": "Triticum durum", "uses": 25}
+]
+
+# Use comprehensive data instead of sample data
+SAMPLE_PLANTS = COMPREHENSIVE_PLANTS
 
 
 def search_plants(query: str) -> List[Dict[str, Any]]:
     """
-    Search for plants by name, scientific name, or zone.
+    Search for plants by name, scientific name, zone, or traits.
     
     Args:
         query (str): Search term
         
     Returns:
-        List[Dict]: List of matching plants
+        List[Dict]: List of matching plants with comprehensive data
     """
     query_lower = query.lower()
     results = [
-        plant for plant in SAMPLE_PLANTS
+        plant for plant in COMPREHENSIVE_PLANTS
         if query_lower in plant["name"].lower()
         or query_lower in plant["scientific_name"].lower()
         or query_lower in plant["zone"].lower()
+        or any(query_lower in trait.lower() for trait in plant["traits"])
+        or query_lower in plant.get("soil_preference", "").lower()
+        or query_lower in plant.get("pollination_type", "").lower()
     ]
     return results
 
@@ -69,9 +293,9 @@ def get_plant_details(plant_id: int) -> Optional[Dict[str, Any]]:
         plant_id (int): Plant ID
         
     Returns:
-        Dict: Plant details or None if not found
+        Dict: Complete plant details including all characteristics
     """
-    for plant in SAMPLE_PLANTS:
+    for plant in COMPREHENSIVE_PLANTS:
         if plant["id"] == plant_id:
             return plant
     return None
@@ -108,16 +332,16 @@ def calculate_trait_similarity(plant_a: Dict[str, Any], plant_b: Dict[str, Any])
 
 def get_plants_by_zone(zone: str) -> List[Dict[str, Any]]:
     """
-    Get all plants for a specific climate zone.
+    Get all plants for a specific climate zone with full details.
     
     Args:
         zone (str): Climate zone (Northern, High Plateau, or Sahara)
         
     Returns:
-        List[Dict]: List of plants in the zone
+        List[Dict]: List of plants in the zone with complete information
     """
     return [
-        plant for plant in SAMPLE_PLANTS
+        plant for plant in COMPREHENSIVE_PLANTS
         if plant["zone"].lower() == zone.lower()
     ]
 
@@ -220,7 +444,7 @@ def get_recommendations(criteria: Dict[str, Any]) -> List[Dict[str, Any]]:
     zone = criteria.get("zone")
     target_trait = criteria.get("target_trait")
     
-    filtered_plants = SAMPLE_PLANTS.copy()
+    filtered_plants = COMPREHENSIVE_PLANTS.copy()
     
     if zone:
         filtered_plants = [
@@ -235,6 +459,72 @@ def get_recommendations(criteria: Dict[str, Any]) -> List[Dict[str, Any]]:
         ]
     
     return filtered_plants[:5]
+
+
+def get_zone_details(zone_name: str) -> Optional[Dict[str, Any]]:
+    """
+    Get detailed information about a climate zone.
+    
+    Args:
+        zone_name (str): Zone name (Northern, High Plateau, or Sahara)
+        
+    Returns:
+        Dict: Complete zone information including climate, soil, and stress factors
+    """
+    for zone in ALGERIA_ZONES:
+        if zone["name"].lower() == zone_name.lower():
+            return zone
+    return None
+
+
+def get_historical_predictions() -> List[Dict[str, Any]]:
+    """
+    Get recent hybridization predictions from historical data.
+    
+    Returns:
+        List[Dict]: List of recent predictions with success rates
+    """
+    return RECENT_PREDICTIONS
+
+
+def get_trending_species() -> List[Dict[str, Any]]:
+    """
+    Get trending/most used plant species.
+    
+    Returns:
+        List[Dict]: List of trending species with usage counts
+    """
+    return TRENDING_SPECIES
+
+
+def get_dashboard_kpis() -> Dict[str, Any]:
+    """
+    Get dashboard KPIs and statistics.
+    
+    Returns:
+        Dict: KPI data including total plants, predictions, success rates
+    """
+    return KPI_DATA
+
+
+def get_all_data_context() -> Dict[str, Any]:
+    """
+    Get complete data context including all plants, zones, and statistics.
+    Use this for comprehensive analysis.
+    
+    Returns:
+        Dict: Complete dataset with all available information
+    """
+    return {
+        "plants": COMPREHENSIVE_PLANTS,
+        "zones": ALGERIA_ZONES,
+        "recent_predictions": RECENT_PREDICTIONS,
+        "trending_species": TRENDING_SPECIES,
+        "kpi_data": KPI_DATA,
+        "total_plants": len(COMPREHENSIVE_PLANTS),
+        "total_zones": len(ALGERIA_ZONES),
+        "database_version": "1.0"
+    }
 
 
 def generate_detailed_report(plant_a_id: int, plant_b_id: int) -> Optional[Dict[str, Any]]:
@@ -762,6 +1052,43 @@ chatbot_tools = {
             "plant_b_id": {"type": "integer", "description": "Second plant ID"}
         },
         "execute": generate_detailed_report
+    },
+    
+    "get_zone_details": {
+        "name": "get_zone_details",
+        "description": "Get detailed information about a climate zone including climate, soil, and stress factors",
+        "parameters": {
+            "zone_name": {"type": "string", "description": "Zone name (Northern, High Plateau, or Sahara)"}
+        },
+        "execute": get_zone_details
+    },
+    
+    "get_historical_predictions": {
+        "name": "get_historical_predictions",
+        "description": "Get recent hybridization predictions from historical data",
+        "parameters": {},
+        "execute": get_historical_predictions
+    },
+    
+    "get_trending_species": {
+        "name": "get_trending_species",
+        "description": "Get trending/most used plant species with usage statistics",
+        "parameters": {},
+        "execute": get_trending_species
+    },
+    
+    "get_dashboard_kpis": {
+        "name": "get_dashboard_kpis",
+        "description": "Get dashboard KPIs and statistics including total plants, predictions, and success rates",
+        "parameters": {},
+        "execute": get_dashboard_kpis
+    },
+    
+    "get_all_data_context": {
+        "name": "get_all_data_context",
+        "description": "Get complete data context with all plants, zones, and statistics for comprehensive analysis",
+        "parameters": {},
+        "execute": get_all_data_context
     }
 }
 

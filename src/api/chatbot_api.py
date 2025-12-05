@@ -249,12 +249,13 @@ def generate_report():
 
 if __name__ == '__main__':
     print("Starting Zer3aZ Chatbot API...")
-    print("API available at: http://localhost:5000")
+    print("API available at: http://localhost:5001")
     print("\nEndpoints:")
     print("  POST /api/chat - Send chat messages")
     print("  GET  /api/config - Get chatbot config")
     print("  GET  /api/tools - List available tools")
     print("  POST /api/tool/<name> - Execute a tool")
+    print("  POST /api/generate-report - Generate breeding report")
     print("  GET  /api/health - Health check")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
