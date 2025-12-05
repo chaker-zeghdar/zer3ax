@@ -105,13 +105,14 @@
 }
 
 .plant-card-header h3 {
-  color: white;
+  color: #1E8449;
   margin-bottom: 0.5rem;
   font-size: 1.5rem;
 }
 
 .scientific-name {
   font-size: 0.9rem;
+  color: black;
   opacity: 0.9;
   font-style: italic;
 }

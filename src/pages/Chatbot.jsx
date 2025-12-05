@@ -218,7 +218,7 @@ const Chatbot = () => {
               style={{
                 fontSize: 14,
                 borderRadius: '10px 0 0 10px',
-                resize: 'none'
+                resize: 'none',
               }}
             />
             <Button
