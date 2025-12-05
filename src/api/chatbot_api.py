@@ -71,18 +71,14 @@ def chat():
                 "success": False
             }), 400
         
-        # Use Gemini AI service if available
-        if gemini_service:
-            response = gemini_service.chat(user_message, conversation_history)
-        else:
-            # Fallback to simple response
-            from services.ai_service import simple_chat_response
-            response = simple_chat_response(user_message)
+        # Use flexible chatbot logic (prioritize over Gemini for better data-driven responses)
+        from services.ai_service import simple_chat_response
+        response = simple_chat_response(user_message)
         
         return jsonify({
             "response": response,
             "success": True,
-            "service": "Gemini AI" if gemini_service else "Simple Fallback"
+            "service": "Flexible Data-Driven AI"
         })
         
     except Exception as e:
