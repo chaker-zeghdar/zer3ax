@@ -25,6 +25,7 @@
 .ant-layout-sider-collapsed .logo {
   justify-content: center;
   gap: 0;
+  margin: -45px;
 }
 
 .logo-image {
@@ -65,19 +66,22 @@
   color: #1E8449;
 }
 
-/* Keep button in top-right even when collapsed */
+/* Center button horizontally when collapsed */
 .ant-layout-sider-collapsed .collapse-button {
-  position: absolute;
-  top: 4px;
-  right: 4px;
+  position: relative;
+  top: auto;
+  right: auto;
+  margin: 0 auto;
 }
 
 /* Adjust logo container padding when collapsed for better centering */
 .ant-layout-sider-collapsed .logo-container {
-  padding: 4px 4px;
+  padding: 8px 4px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0;
 }
 
 .tagline {
