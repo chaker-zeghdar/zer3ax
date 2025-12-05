@@ -35,6 +35,7 @@ const Chatbot = () => {
 
     // Call Python chatbot API
     try {
+      console.log('Sending message to API:', currentInput);
       const response = await fetch('http://localhost:5001/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,6 +49,7 @@ const Chatbot = () => {
       });
 
       const data = await response.json();
+      console.log('Received response from API:', data);
       
       const botMessage = {
         id: messages.length + 2,
@@ -56,6 +58,7 @@ const Chatbot = () => {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
+      console.log('Bot message:', botMessage);
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Chat error:', error);
