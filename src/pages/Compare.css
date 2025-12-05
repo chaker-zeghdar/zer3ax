@@ -1,0 +1,203 @@
+.compare-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.compare-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.compare-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.compare-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.selection-section {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  align-items: start;
+}
+
+.selector-card {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.selector-card label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.vs-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-green);
+  margin-top: 3.5rem;
+}
+
+.comparison-results {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.comparison-summary {
+  background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-card) 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border-left: 4px solid var(--primary-green);
+}
+
+.comparison-summary h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.comparison-summary p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+
+.comparison-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.plant-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.3s;
+}
+
+.plant-card:hover {
+  transform: translateY(-5px);
+}
+
+.plant-card-header {
+  padding: 2rem;
+  text-align: center;
+  color: white;
+}
+
+.plant-icon-large {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.plant-card-header h3 {
+  color: white;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.scientific-name {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+.plant-card-body {
+  padding: 2rem;
+}
+
+.trait-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  align-items: center;
+}
+
+.trait-row:last-child {
+  border-bottom: none;
+}
+
+.trait-row:hover {
+  background: var(--bg-hover);
+}
+
+.trait-icon {
+  font-size: 1.2rem;
+}
+
+.trait-label {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.trait-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.chart-section {
+  background: var(--bg-card);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.chart-section h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .comparison-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .selection-section {
+    grid-template-columns: 1fr;
+  }
+
+  .vs-divider {
+    margin: 0;
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .plant-card-body {
+    padding: 1rem;
+  }
+
+  .trait-row {
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,96 @@
+/* Logo Container */
+.logo-container {
+  padding: 12px 24px 16px 24px;
+  text-align: center;
+  border-bottom: 1px solid #E1E8ED;
+  background: linear-gradient(135deg, #E8F8F0 0%, #D4EFDF 100%);
+  position: relative;
+}
+
+.logo {
+  font-size: 1.75rem;
+  text-align: center;
+  margin: 0;
+  color: #1E8449;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 1.75rem;
+  color: #1E8449;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.collapse-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #27AE60;
+  border: 1px solid #E1E8ED;
+  border-radius: 6px;
+  background: #FFFFFF;
+  transition: all 0.3s;
+}
+
+.collapse-button:hover {
+  background: #E8F8F0;
+  border-color: #27AE60;
+}
+
+.tagline {
+  font-size: 0.8rem;
+  text-align: center;
+  color: #27AE60;
+  margin: 6px 0 0 0;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  border-top: 1px solid #E1E8ED;
+  text-align: center;
+  background: #FAFBFC;
+}
+
+.footer-text {
+  font-size: 0.7rem;
+  color: #7F8C8D;
+  margin: 2px 0;
+}
+
+/* Custom Menu Styling */
+.ant-menu-light .ant-menu-item-selected {
+  background-color: #D4EFDF !important;
+  color: #1E8449 !important;
+}
+
+.ant-menu-light .ant-menu-item:hover {
+  background-color: #E8F8F0 !important;
+  color: #27AE60 !important;
+}
