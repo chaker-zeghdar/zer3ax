@@ -41,7 +41,82 @@ tool_registry = ToolRegistry()
 
 
 # ========================================
-# MOCK DATA FROM DASHBOARD
+# PLANT BREEDING & HYBRIDIZATION KNOWLEDGE BASE
+# ========================================
+
+BREEDING_KNOWLEDGE = {
+    "hybridization": {
+        "definition": "Hybridization is the process of crossing two genetically different plants to combine desirable traits from both parents.",
+        "types": [
+            "Intraspecific: Within same species (e.g., Wheat × Wheat varieties)",
+            "Interspecific: Between different species (e.g., Wheat × Rye = Triticale)",
+            "Intergeneric: Between different genera (rare, requires advanced techniques)"
+        ],
+        "goals": [
+            "Increase yield potential",
+            "Improve disease/pest resistance",
+            "Enhance drought/salinity tolerance",
+            "Better nutritional quality",
+            "Adapt to climate zones"
+        ]
+    },
+    "genetic_concepts": {
+        "dominance": "Dominant traits mask recessive ones in F1 generation",
+        "mendel_law": "Traits segregate independently in offspring (Mendel's Laws)",
+        "heterosis": "Hybrid vigor - F1 hybrids often outperform both parents",
+        "heritability": "Proportion of trait variation due to genetics vs environment",
+        "linkage": "Genes close on chromosome tend to inherit together"
+    },
+    "breeding_methods": {
+        "mass_selection": "Select best individual plants from population",
+        "pedigree": "Track family lines, select from each generation",
+        "backcross": "Cross hybrid back to parent to transfer single trait",
+        "marker_assisted": "Use DNA markers to identify desirable genes early",
+        "double_haploid": "Accelerate homozygosity for faster variety development"
+    },
+    "compatibility": {
+        "wheat_barley": {"success": "Low", "notes": "Different ploidy levels make crossing difficult"},
+        "wheat_wheat": {"success": "High", "notes": "Same species, excellent compatibility"},
+        "wheat_rye": {"success": "Medium", "notes": "Creates Triticale, requires embryo rescue"},
+        "corn_sorghum": {"success": "Very Low", "notes": "Different genera, nearly impossible naturally"},
+        "same_zone": {"success": "High", "notes": "Plants from same climate adapt similarly"}
+    },
+    "trait_inheritance": {
+        "drought_tolerance": "Polygenic (multiple genes), partially dominant",
+        "disease_resistance": "Can be single gene (R genes) or polygenic",
+        "yield": "Highly polygenic, influenced by environment",
+        "height": "Semi-dwarf genes (Rht) show partial dominance",
+        "grain_quality": "Complex inheritance, multiple QTLs involved"
+    },
+    "breeding_timeline": {
+        "traditional": "8-12 years from cross to variety release",
+        "marker_assisted": "5-8 years with DNA marker selection",
+        "doubled_haploid": "4-6 years using DH technology",
+        "gene_editing": "2-4 years with CRISPR (regulatory pending)"
+    }
+}
+
+# Zone-based breeding recommendations
+ZONE_BREEDING_TIPS = {
+    "Northern": {
+        "priorities": ["Cold tolerance", "High rainfall adaptation", "Disease resistance"],
+        "best_crosses": "Bread Wheat × Corn (for vigor), Alfalfa × local varieties",
+        "challenges": "Fungal diseases in wet climate, need resistant genes"
+    },
+    "High Plateau": {
+        "priorities": ["Moderate drought tolerance", "Temperature flexibility", "Wide adaptation"],
+        "best_crosses": "Barley × Durum Wheat varieties, Sorghum for diversification",
+        "challenges": "Variable climate requires stable genetics"
+    },
+    "Sahara": {
+        "priorities": ["Extreme drought tolerance", "Heat resistance", "Low water use"],
+        "best_crosses": "Sorghum × drought-tolerant varieties, Barley for heat genes",
+        "challenges": "Very limited water, need deep root systems"
+    }
+}
+
+# ========================================
+# EXISTING MOCK DATA
 # ========================================
 
 PLANTS_DATA = [
@@ -107,6 +182,15 @@ def extract_keywords(question: str) -> Dict:
     """Extract keywords from question - works with ANY language and even single words"""
     q = question.lower()
     
+    # Plant name aliases for better recognition (including Algerian dialect)
+    PLANT_ALIASES = {
+        "wheat": ["wheat", "blé", "قمح", "bread wheat", "durum wheat", "kamh", "el kamh", "قمح الصلب"],
+        "barley": ["barley", "orge", "شعير", "ch3ir", "el ch3ir", "chaîr"],
+        "corn": ["corn", "maize", "maïs", "ذرة", "zea", "dra", "el dra", "درا"],
+        "sorghum": ["sorghum", "sorgo", "ذرة رفيعة", "millet", "draa", "el draa"],
+        "alfalfa": ["alfalfa", "luzerne", "فصة", "lucerne", "fsa", "el fsa", "fessa", "الفصة"]
+    }
+    
     # Extract plant names (more flexible matching - works with partial names)
     plants = []
     for p in PLANTS_DATA:
@@ -120,72 +204,72 @@ def extract_keywords(question: str) -> Dict:
             plants.append(p["commonName"])
             continue
             
-        # Single word matching for each plant
-        if "wheat" in q or "blé" in q or "قمح" in q:
-            if "wheat" in common_lower:
-                plants.append(p["commonName"])
-        elif "barley" in q or "orge" in q or "شعير" in q:
-            if "barley" in common_lower:
-                plants.append(p["commonName"])
-        elif "corn" in q or "maïs" in q or "ذرة" in q:
-            if "corn" in common_lower:
-                plants.append(p["commonName"])
-        elif "sorghum" in q or "sorgo" in q or "ذرة رفيعة" in q:
-            if "sorghum" in common_lower:
-                plants.append(p["commonName"])
-        elif "alfalfa" in q or "luzerne" in q or "فصة" in q:
-            if "alfalfa" in common_lower:
-                plants.append(p["commonName"])
+        # Check aliases for each plant
+        for base_name, aliases in PLANT_ALIASES.items():
+            if any(alias in q for alias in aliases):
+                if base_name in common_lower:
+                    plants.append(p["commonName"])
+                    break
     
     # Remove duplicates
     plants = list(dict.fromkeys(plants))
     
-    # Extract zones (multi-language)
+    # Extract zones (multi-language + Algerian dialect)
     zones = []
-    if any(w in q for w in ["northern", "north", "coastal", "nord", "côtier", "شمال"]):
+    if any(w in q for w in ["northern", "north", "coastal", "nord", "côtier", "شمال", "chamal", "ch3mal", "tell", "sahel"]):
         zones.append("Northern")
-    if any(w in q for w in ["plateau", "high plateau", "hauts plateaux", "الهضاب"]):
+    if any(w in q for w in ["plateau", "high plateau", "hauts plateaux", "الهضاب", "hadhab", "h'dhab", "hdhab"]):
         zones.append("High Plateau")
-    if any(w in q for w in ["sahara", "southern", "south", "desert", "sud", "صحراء", "جنوب"]):
+    if any(w in q for w in ["sahara", "southern", "south", "desert", "sud", "صحراء", "جنوب", "sahra", "s7ara", "jnoub"]):
         zones.append("Sahara")
     
-    # Extract traits (multi-language)
+    # Extract traits (multi-language + Algerian dialect)
     traits = []
     trait_keywords = {
-        "drought": ["drought", "dry", "sécheresse", "sec", "جفاف"],
-        "salinity": ["salinity", "salt", "salinité", "sel", "ملوحة"],
-        "disease": ["disease", "resistance", "maladie", "résistance", "مرض", "مقاومة"],
-        "yield": ["yield", "production", "rendement", "إنتاج"],
-        "genome": ["genome", "génome", "جينوم"],
-        "rainfall": ["rain", "rainfall", "pluie", "précipitation", "أمطار"],
-        "temperature": ["temperature", "temp", "température", "حرارة"]
+        "drought": ["drought", "dry", "sécheresse", "sec", "جفاف", "jfaf", "ybes", "9e7t", "laq7at", "kanch"],
+        "salinity": ["salinity", "salt", "salinité", "sel", "ملوحة", "mel7", "lmel7", "salti"],
+        "disease": ["disease", "resistance", "maladie", "résistance", "مرض", "مقاومة", "mradh", "lmradh", "mouqawama"],
+        "yield": ["yield", "production", "rendement", "إنتاج", "intaj", "production", "mrdoud", "rendement"],
+        "genome": ["genome", "génome", "جينوم", "jinoum", "genes"],
+        "rainfall": ["rain", "rainfall", "pluie", "précipitation", "أمطار", "chta", "chtaa", "el chta", "lmtar"],
+        "temperature": ["temperature", "temp", "température", "حرارة", "s5ana", "broudh", "darja"]
     }
     
     for trait, keywords in trait_keywords.items():
         if any(kw in q for kw in keywords):
             traits.append(trait)
     
-    # Detect question type (multi-language intent detection)
+    # Detect breeding/hybridization intent (+ Algerian dialect)
+    breeding_keywords = ["hybrid", "cross", "breed", "hybridization", "croisement", "تهجين", 
+                        "genetics", "inherit", "gene", "chromosome", "mendel", "f1", "f2",
+                        "pollination", "compatibility", "backcross", "marker",
+                        "tahdjin", "tahjin", "khalit", "5alit", "mix", "tazwij", "t'zwij"]
+    is_breeding_question = any(kw in q for kw in breeding_keywords)
+    
+    # Detect question type (multi-language + Algerian dialect)
     qtype = "general"
     
-    # Recommendation
-    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح"]):
+    # Recommendation (+ Algerian: a7san, khir, nsah, nebta, zar3a)
+    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح", "a7san", "khir", "khayr", "nsah", "nsi7a",
+                            "nebta", "nabta", "zar3a", "zra3a", "nabat"]):
         qtype = "recommendation"
     
-    # Ranking
-    elif any(w in q for w in ["rank", "ranking", "position", "classement", "ترتيب"]):
+    # Ranking (+ Algerian: tartib, classement)
+    elif any(w in q for w in ["rank", "ranking", "position", "classement", "ترتيب", "tartib", "mertba"]):
         qtype = "ranking"
     
-    # Comparison
-    elif any(w in q for w in ["compare", "vs", "versus", "comparer", "مقارنة"]):
+    # Comparison (+ Algerian: 9arn, compare)
+    elif any(w in q for w in ["compare", "vs", "versus", "comparer", "مقارنة", "9arn", "qarn", "mouqarana"]):
         qtype = "comparison"
     
-    # What/Tell/Info questions
-    elif any(w in q for w in ["what", "tell", "about", "info", "describe", "qu'est", "quoi", "ماذا", "ما هو"]):
+    # What/Tell/Info questions (+ Algerian: wach, chkoun, kifech, 3lach)
+    elif any(w in q for w in ["what", "tell", "about", "info", "describe", "qu'est", "quoi", "ماذا", "ما هو", 
+                               "wach", "wash", "chkoun", "shkoun", "kifech", "kifach", "3lach", "3lah"]):
         qtype = "what"
     
-    # Characteristics
-    elif any(w in q for w in ["characteristic", "trait", "property", "caractéristique", "propriété", "خصائص"]):
+    # Characteristics (+ Algerian: khasa2is, sfat)
+    elif any(w in q for w in ["characteristic", "trait", "property", "caractéristique", "propriété", "خصائص", 
+                               "khasa2is", "khasa'is", "sfat", "sifat"]):
         qtype = "characteristics"
     
     # Single word handling - if just a plant name or trait
@@ -195,7 +279,12 @@ def extract_keywords(question: str) -> Dict:
         elif traits:
             qtype = "ranking"  # Single word trait = show rankings
     
-    return {"plants": plants, "zones": zones, "traits": traits, "type": qtype, "original": question}
+    # Override type if breeding question detected
+    if is_breeding_question:
+        qtype = "breeding"
+    
+    return {"plants": plants, "zones": zones, "traits": traits, "type": qtype, 
+            "is_breeding": is_breeding_question, "original": question}
 
 
 # ========================================
@@ -257,6 +346,90 @@ def answer_question(question: str) -> str:
             resp.append("\nPlants: Wheat, Barley, Corn, Sorghum, Alfalfa")
             return "".join(resp)
     
+    # BREEDING/HYBRIDIZATION QUESTIONS (any breeding-related query)
+    if kw["is_breeding"]:
+        # General hybridization
+        if "hybrid" in q or "hybridization" in q:
+            resp.append("**🧬 Plant Hybridization**\n")
+            resp.append(f"{BREEDING_KNOWLEDGE['hybridization']['definition']}\n\n")
+            resp.append("**Types:**\n")
+            for t in BREEDING_KNOWLEDGE['hybridization']['types']:
+                resp.append(f"• {t}\n")
+            if kw["plants"]:
+                resp.append(f"\n**For {kw['plants'][0]}:** Check compatibility below!")
+            return "".join(resp)
+        
+        # Crossing compatibility between two plants
+        if "cross" in q and len(kw["plants"]) >= 2:
+            p1_name = kw["plants"][0].lower().replace(" ", "_")
+            p2_name = kw["plants"][1].lower().replace(" ", "_")
+            compat_key = f"{p1_name}_{p2_name}"
+            
+            # Check in compatibility database
+            compat = BREEDING_KNOWLEDGE['compatibility'].get(compat_key)
+            if compat:
+                resp.append(f"**{kw['plants'][0]} × {kw['plants'][1]} Cross:**\n")
+                resp.append(f"Success Rate: {compat['success']}\n")
+                resp.append(f"Notes: {compat['notes']}\n")
+            else:
+                # General zone-based compatibility
+                p1 = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
+                p2 = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][1]), None)
+                if p1 and p2:
+                    if p1["optimalZone"] == p2["optimalZone"]:
+                        resp.append(f"**{kw['plants'][0]} × {kw['plants'][1]}:**\n")
+                        resp.append(f"✅ Same zone ({p1['optimalZone']}) = Good compatibility\n")
+                        resp.append(f"Expected hybrid traits: Combined drought ({(p1['resistance']['drought']+p2['resistance']['drought'])//2}/10)\n")
+                    else:
+                        resp.append(f"**{kw['plants'][0]} × {kw['plants'][1]}:**\n")
+                        resp.append(f"⚠️ Different zones = Challenging cross\n")
+                        resp.append(f"Requires adaptation breeding and testing\n")
+            return "".join(resp)
+        
+        # Genetics/inheritance questions
+        if "inherit" in q or "gene" in q or "genetics" in q:
+            resp.append("**🧬 Plant Genetics & Inheritance:**\n\n")
+            if kw["traits"]:
+                trait = kw["traits"][0]
+                if trait in BREEDING_KNOWLEDGE['trait_inheritance']:
+                    resp.append(f"**{trait.title()} Inheritance:**\n")
+                    resp.append(f"{BREEDING_KNOWLEDGE['trait_inheritance'][trait]}\n\n")
+            resp.append("**Key Concepts:**\n")
+            for concept, desc in BREEDING_KNOWLEDGE['genetic_concepts'].items():
+                resp.append(f"• {concept.replace('_', ' ').title()}: {desc}\n")
+            return "".join(resp)
+        
+        # Breeding methods
+        if "method" in q or "technique" in q or "how to breed" in q:
+            resp.append("**🔬 Breeding Methods:**\n\n")
+            for method, desc in BREEDING_KNOWLEDGE['breeding_methods'].items():
+                resp.append(f"• **{method.replace('_', ' ').title()}:** {desc}\n")
+            resp.append("\n**Timeline:**\n")
+            for timeline, years in BREEDING_KNOWLEDGE['breeding_timeline'].items():
+                resp.append(f"• {timeline.replace('_', ' ').title()}: {years}\n")
+            return "".join(resp)
+        
+        # Zone-specific breeding
+        if kw["zones"]:
+            zone_name = kw["zones"][0]
+            if zone_name in ZONE_BREEDING_TIPS:
+                tips = ZONE_BREEDING_TIPS[zone_name]
+                resp.append(f"**Breeding for {zone_name} Zone:**\n\n")
+                resp.append(f"**Priorities:** {', '.join(tips['priorities'])}\n")
+                resp.append(f"**Recommended Crosses:** {tips['best_crosses']}\n")
+                resp.append(f"**Challenges:** {tips['challenges']}\n")
+                return "".join(resp)
+        
+        # General breeding advice
+        resp.append("**🌾 Plant Breeding Tips:**\n\n")
+        resp.append("**Goals:** " + ", ".join(BREEDING_KNOWLEDGE['hybridization']['goals'][:3]) + "\n\n")
+        resp.append("**Ask me about:**\n")
+        resp.append("• Crossing specific plants: 'Can I cross wheat with barley?'\n")
+        resp.append("• Breeding methods: 'What are breeding techniques?'\n")
+        resp.append("• Trait inheritance: 'How is drought tolerance inherited?'\n")
+        resp.append("• Zone breeding: 'Best crosses for Sahara zone?'\n")
+        return "".join(resp)
+    
     # COMPARISON QUESTIONS (compare X with Y / compare it with X)
     if "compare" in q or "vs" in q or "versus" in q or kw["type"] == "comparison":
         if len(kw["plants"]) >= 2:
@@ -285,8 +458,8 @@ def answer_question(question: str) -> str:
                     resp.append(f"✅ {p2['commonName']} has higher yield\n")
                 return "".join(resp)
     
-    # BETTER/WHICH QUESTIONS
-    if "better" in q or ("which" in q and ("one" in q or "is" in q)):
+    # BETTER/WHICH QUESTIONS (+ Algerian: lel = for)
+    if "better" in q or ("which" in q and ("one" in q or "is" in q)) or (any(w in q for w in ["a7san", "khir"]) and any(w in q for w in ["lel", "l", "pour"])):
         # Extract target trait or plant
         if kw["plants"]:
             # "which one is better for corn" - means compare FOR corn (corn production/crossing)
@@ -384,9 +557,13 @@ def answer_question(question: str) -> str:
     
     # RECOMMENDATION QUESTIONS
     elif kw["type"] == "recommendation":
-        if "drought" in q:
+        # Check traits list instead of just English word
+        if "drought" in kw["traits"] or any(w in q for w in ["drought", "jfaf", "ybes", "9e7t", "dry"]):
             best = max(PLANTS_DATA, key=lambda p: p["resistance"]["drought"])
             resp.append(f"**Best for Drought:** {best['commonName']} ({best['resistance']['drought']}/10)\n")
+        elif "yield" in kw["traits"] or any(w in q for w in ["yield", "intaj", "production", "mrdoud"]):
+            best = max(PLANTS_DATA, key=lambda p: p["yieldPotential"])
+            resp.append(f"**Best for Yield:** {best['commonName']} ({best['yieldPotential']}/10)\n")
         elif kw["zones"]:
             zone = next((z for z in ZONES_DATA if z["name"] == kw["zones"][0]), None)
             if zone:
@@ -404,14 +581,33 @@ def answer_question(question: str) -> str:
             for p in sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True):
                 resp.append(f"- {p['commonName']}: {p['yieldPotential']}/10\n")
     
-    # FALLBACK
+    # FALLBACK - for unrelated questions
     if not resp:
-        resp.append("I can help with:\n")
-        resp.append("• Plant info: 'What is wheat?'\n")
-        resp.append("• Rankings: 'What is the ranking of sorghum?'\n")
-        resp.append("• Characteristics: 'What are the characteristics?'\n")
-        resp.append("• Comparisons: 'Compare wheat with barley'\n")
-        resp.append("• Best plants: 'Which is better for drought?'\n")
-        resp.append("\nAvailable: Bread Wheat, Barley, Corn, Sorghum, Durum Wheat, Alfalfa")
+        # Check if question seems unrelated to plants/agriculture
+        unrelated_keywords = ["weather", "news", "politics", "sport", "football", "movie", "music", 
+                             "recipe", "cooking", "price", "market", "sell", "buy", "phone", "computer",
+                             "game", "film", "song", "kora", "match", "prix", "thaman", "chi7aja"]
+        
+        if any(kw in q for kw in unrelated_keywords) and not any(kw in q for kw in ["plant", "crop", "agriculture", "farm", "nebta", "zar3a"]):
+            resp.append("🌾 **Sorry, I can't answer that.**\n\n")
+            resp.append("I'm specialized in **plant breeding and agriculture** for Algeria.\n\n")
+            resp.append("**Ask me about:**\n")
+            resp.append("• Plants: wheat, barley, corn, sorghum, alfalfa\n")
+            resp.append("• Zones: Northern, High Plateau, Sahara\n")
+            resp.append("• Traits: drought, yield, disease resistance\n")
+            resp.append("• Breeding: hybridization, genetics, crossing\n")
+            resp.append("• Comparisons: 'Compare wheat with barley'\n")
+            resp.append("• Rankings: 'What is the ranking of sorghum?'\n\n")
+            resp.append("💬 **Algerian dialect welcome!** \n")
+            resp.append("Try: 'wach a7san nebta lel jfaf?' or 'kamh walla ch3ir?'")
+        else:
+            # Generic fallback for unclear plant-related questions
+            resp.append("I can help with:\n")
+            resp.append("• Plant info: 'What is wheat?' or 'wach howa el kamh?'\n")
+            resp.append("• Rankings: 'What is the ranking of sorghum?' or 'tartib el dra?'\n")
+            resp.append("• Characteristics: 'What are the characteristics?' or 'khasa2is?'\n")
+            resp.append("• Comparisons: 'Compare wheat with barley' or '9arn el kamh w el ch3ir'\n")
+            resp.append("• Best plants: 'Which is better for drought?' or 'a7san lel jfaf?'\n")
+            resp.append("\nAvailable: Bread Wheat, Barley, Corn, Sorghum, Durum Wheat, Alfalfa")
     
     return "".join(resp)
