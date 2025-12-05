@@ -557,9 +557,13 @@ def answer_question(question: str) -> str:
     
     # RECOMMENDATION QUESTIONS
     elif kw["type"] == "recommendation":
-        if "drought" in q:
+        # Check traits list instead of just English word
+        if "drought" in kw["traits"] or any(w in q for w in ["drought", "jfaf", "ybes", "9e7t", "dry"]):
             best = max(PLANTS_DATA, key=lambda p: p["resistance"]["drought"])
             resp.append(f"**Best for Drought:** {best['commonName']} ({best['resistance']['drought']}/10)\n")
+        elif "yield" in kw["traits"] or any(w in q for w in ["yield", "intaj", "production", "mrdoud"]):
+            best = max(PLANTS_DATA, key=lambda p: p["yieldPotential"])
+            resp.append(f"**Best for Yield:** {best['commonName']} ({best['yieldPotential']}/10)\n")
         elif kw["zones"]:
             zone = next((z for z in ZONES_DATA if z["name"] == kw["zones"][0]), None)
             if zone:
