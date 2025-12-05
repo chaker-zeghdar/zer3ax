@@ -120,7 +120,7 @@ const AppLayout = ({ children }) => {
                 alt="Zer3aZ Logo" 
                 className="logo-image"
               />
-              {!collapsed && <span className="logo-text">Zer3aZ</span>}
+              {!collapsed && <span className="logo-text">Zer3aX</span>}
             </div>
             {!collapsed && <p className="tagline">AI Plant Breeding</p>}
           </div>

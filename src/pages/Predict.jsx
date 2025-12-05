@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Loader, ChevronDown, MessageCircle, X, Send } from 'lucide-react';
+import { Search, Loader, ChevronDown } from 'lucide-react';
 import { plants, predictHybrid } from '../data/mockData';
 import './Predict.css';
 
@@ -13,14 +13,6 @@ const Predict = () => {
   const [showDropdownB, setShowDropdownB] = useState(false);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
-  
-  // Chatbot states
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [explanationLoading, setExplanationLoading] = useState(false);
-  const [aiExplanation, setAiExplanation] = useState('');
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
 
   const filteredPlantsA = plants.filter(p => 
     p.name.toLowerCase().includes(searchA.toLowerCase()) ||
@@ -41,115 +33,7 @@ const Predict = () => {
       const result = predictHybrid(plantA.id, plantB.id);
       setPrediction(result);
       setLoading(false);
-      
-      // Reset explanation when new prediction is made
-      setShowExplanation(false);
-      setAiExplanation('');
-      setChatMessages([]);
     }, 1500);
-  };
-  
-  // Get AI explanation for the prediction
-  const getAIExplanation = async () => {
-    if (!prediction || !plantA || !plantB) return;
-    
-    setExplanationLoading(true);
-    setShowExplanation(true);
-    
-    try {
-      const response = await fetch('http://localhost:5001/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `Explain this hybridization prediction in detail:
-
-Plant A: ${plantA.name} (${plantA.commonName})
-Plant B: ${plantB.name} (${plantB.commonName})
-Success Rate: ${prediction.successRate}%
-Confidence: ${prediction.confidence}
-Shared Traits: ${prediction.sharedTraits.join(', ')}
-
-Provide a comprehensive scientific explanation of:
-1. Why this success rate was predicted
-2. Key genetic and environmental compatibility factors
-3. Potential challenges and benefits
-4. Breeding recommendations
-5. Expected F1 characteristics`,
-          conversation_history: []
-        })
-      });
-      
-      const data = await response.json();
-      setAiExplanation(data.response);
-      
-      // Add initial AI message to chat
-      setChatMessages([{
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-      
-    } catch (error) {
-      console.error('Error getting explanation:', error);
-      setAiExplanation('Unable to generate explanation. Please ensure the API is running.');
-    } finally {
-      setExplanationLoading(false);
-    }
-  };
-  
-  // Send chat message
-  const sendChatMessage = async () => {
-    if (!chatInput.trim() || !prediction) return;
-    
-    const userMessage = {
-      role: 'user',
-      content: chatInput,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    
-    setChatMessages(prev => [...prev, userMessage]);
-    setChatInput('');
-    setChatLoading(true);
-    
-    try {
-      const context = `Current prediction context:
-Plant A: ${plantA.name} (${plantA.commonName})
-Plant B: ${plantB.name} (${plantB.commonName})
-Success Rate: ${prediction.successRate}%
-Shared Traits: ${prediction.sharedTraits.join(', ')}
-
-User question: ${chatInput}`;
-      
-      const response = await fetch('http://localhost:5001/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: context,
-          conversation_history: chatMessages.map(m => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            content: m.content
-          }))
-        })
-      });
-      
-      const data = await response.json();
-      
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-      
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    } finally {
-      setChatLoading(false);
-    }
   };
 
   const getConfidenceLevel = (confidence) => {
@@ -388,102 +272,7 @@ User question: ${chatInput}`;
                   }
                 </p>
               </div>
-              
-              {/* Get Detailed Explanation Button */}
-              <button 
-                className="explanation-btn"
-                onClick={getAIExplanation}
-                disabled={explanationLoading}
-              >
-                {explanationLoading ? (
-                  <>
-                    <Loader className="spinner" size={18} />
-                    Generating Explanation...
-                  </>
-                ) : showExplanation ? (
-                  <>
-                    <MessageCircle size={18} />
-                    Refresh Explanation
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle size={18} />
-                    Get Detailed AI Explanation
-                  </>
-                )}
-              </button>
             </div>
-            
-            {/* AI Detailed Explanation Panel */}
-            {showExplanation && (
-              <motion.div
-                className="explanation-panel"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <div className="explanation-header">
-                  <h3>🧬 Detailed Scientific Explanation</h3>
-                  <button 
-                    className="close-btn"
-                    onClick={() => setShowExplanation(false)}
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-                
-                <div className="explanation-content">
-                  {aiExplanation || 'Loading explanation...'}
-                </div>
-                
-                {/* Interactive Chat Section */}
-                <div className="prediction-chat">
-                  <div className="chat-header">
-                    <MessageCircle size={18} />
-                    <span>Ask Follow-up Questions</span>
-                  </div>
-                  
-                  <div className="chat-messages">
-                    {chatMessages.map((msg, index) => (
-                      <div 
-                        key={index} 
-                        className={`chat-message ${msg.role}`}
-                      >
-                        <div className="message-content">
-                          {msg.content}
-                        </div>
-                        <span className="message-time">{msg.timestamp}</span>
-                      </div>
-                    ))}
-                    {chatLoading && (
-                      <div className="chat-message assistant">
-                        <div className="message-content">
-                          <Loader className="spinner" size={16} />
-                          Thinking...
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="chat-input-container">
-                    <input
-                      type="text"
-                      placeholder="Ask about characteristics, breeding tips, trait inheritance..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-                      disabled={chatLoading}
-                    />
-                    <button 
-                      onClick={sendChatMessage}
-                      disabled={!chatInput.trim() || chatLoading}
-                    >
-                      <Send size={18} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
           </motion.div>
         )}
       </div>

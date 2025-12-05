@@ -19,7 +19,7 @@ const Chatbot = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!inputValue.trim()) return;
 
     const userMessage = {
@@ -33,57 +33,17 @@ const Chatbot = () => {
     const currentInput = inputValue;
     setInputValue('');
 
-    // Show typing indicator
-    const typingMessage = {
-      id: messages.length + 2,
-      type: 'bot',
-      text: 'Thinking...',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setMessages(prev => [...prev, typingMessage]);
-
-    try {
-      // Call Python backend API
-      const response = await fetch('http://localhost:5001/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: currentInput,
-          conversation_history: messages.filter(m => m.type !== 'bot' || m.text !== 'Thinking...').map(m => ({
-            role: m.type === 'user' ? 'user' : 'assistant',
-            content: m.text
-          }))
-        })
-      });
-
-      const data = await response.json();
-      
-      // Replace typing indicator with actual response
-      setMessages(prev => [
-        ...prev.slice(0, -1),
-        {
-          id: messages.length + 2,
-          type: 'bot',
-          text: data.response || 'Sorry, I encountered an error.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    } catch (error) {
-      console.error('Error calling chatbot API:', error);
-      // Fallback to local processing if API fails
-      const fallbackResponse = processUserMessage(currentInput);
-      setMessages(prev => [
-        ...prev.slice(0, -1),
-        {
-          id: messages.length + 2,
-          type: 'bot',
-          text: fallbackResponse,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    }
+    // Process bot response using config and tools
+    setTimeout(() => {
+      const response = processUserMessage(currentInput);
+      const botMessage = {
+        id: messages.length + 2,
+        type: 'bot',
+        text: response,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }, 1000);
   };
 
   // Process user message and generate response

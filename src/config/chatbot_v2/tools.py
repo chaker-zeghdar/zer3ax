@@ -1,6 +1,6 @@
 """
-Custom Tools/Functions for Chatbot
-Define your domain-specific tools here
+Intelligent Keyword-Based Tools for Plant Breeding Chatbot
+Answers ANY question using mock data with smart keyword extraction
 """
 
 from typing import Dict, Any, List, Callable
@@ -14,14 +14,7 @@ class ToolRegistry:
         self.tool_definitions: List[Dict] = []
     
     def register(self, name: str, description: str, parameters: Dict):
-        """
-        Register a new tool
-        
-        Args:
-            name: Tool name
-            description: What the tool does
-            parameters: Parameter schema
-        """
+        """Register a new tool"""
         def decorator(func: Callable):
             self.tools[name] = func
             self.tool_definitions.append({
@@ -48,73 +41,179 @@ tool_registry = ToolRegistry()
 
 
 # ========================================
-# EXAMPLE TOOLS - Customize for your needs
+# MOCK DATA FROM DASHBOARD
+# ========================================
+
+PLANTS_DATA = [
+    {
+        "id": 1, "name": "Triticum aestivum", "commonName": "Bread Wheat", "icon": "🌾",
+        "genomeSize": 17000, "rainfall": "400-600mm", "temperature": "15-25°C",
+        "droughtTolerance": "Moderate", "resistance": {"drought": 6, "salinity": 4, "disease": 7},
+        "optimalZone": "Northern", "yieldPotential": 8, "geneticDiversity": 7
+    },
+    {
+        "id": 2, "name": "Hordeum vulgare", "commonName": "Barley", "icon": "🌾",
+        "genomeSize": 5100, "rainfall": "300-500mm", "temperature": "12-22°C",
+        "droughtTolerance": "High", "resistance": {"drought": 8, "salinity": 7, "disease": 6},
+        "optimalZone": "High Plateau", "yieldPotential": 7, "geneticDiversity": 6
+    },
+    {
+        "id": 3, "name": "Zea mays", "commonName": "Corn", "icon": "🌽",
+        "genomeSize": 2300, "rainfall": "500-800mm", "temperature": "20-30°C",
+        "droughtTolerance": "Low", "resistance": {"drought": 4, "salinity": 3, "disease": 5},
+        "optimalZone": "Northern", "yieldPotential": 9, "geneticDiversity": 8
+    },
+    {
+        "id": 4, "name": "Sorghum bicolor", "commonName": "Sorghum", "icon": "🌾",
+        "genomeSize": 730, "rainfall": "400-600mm", "temperature": "25-35°C",
+        "droughtTolerance": "Very High", "resistance": {"drought": 9, "salinity": 6, "disease": 7},
+        "optimalZone": "Sahara", "yieldPotential": 7, "geneticDiversity": 8
+    },
+    {
+        "id": 5, "name": "Triticum durum", "commonName": "Durum Wheat", "icon": "🌾",
+        "genomeSize": 12000, "rainfall": "350-550mm", "temperature": "15-25°C",
+        "droughtTolerance": "Moderate", "resistance": {"drought": 7, "salinity": 5, "disease": 6},
+        "optimalZone": "High Plateau", "yieldPotential": 7, "geneticDiversity": 6
+    },
+    {
+        "id": 6, "name": "Medicago sativa", "commonName": "Alfalfa", "icon": "🌿",
+        "genomeSize": 900, "rainfall": "450-750mm", "temperature": "15-28°C",
+        "droughtTolerance": "Moderate", "resistance": {"drought": 7, "salinity": 6, "disease": 7},
+        "optimalZone": "Northern", "yieldPotential": 8, "geneticDiversity": 7
+    }
+]
+
+ZONES_DATA = [
+    {
+        "name": "Northern", "rainfall": "400-800mm", "temperature": "10-30°C",
+        "soil": "Clay-loam, fertile", "bestPlants": ["Bread Wheat", "Corn", "Alfalfa"], "suitability": 8.5
+    },
+    {
+        "name": "High Plateau", "rainfall": "200-400mm", "temperature": "5-35°C",
+        "soil": "Sandy-loam, alkaline", "bestPlants": ["Barley", "Durum Wheat", "Sorghum"], "suitability": 7.2
+    },
+    {
+        "name": "Sahara", "rainfall": "50-200mm", "temperature": "15-45°C",
+        "soil": "Sandy, poor organic matter", "bestPlants": ["Sorghum"], "suitability": 4.8
+    }
+]
+
+
+# ========================================
+# KEYWORD EXTRACTION
+# ========================================
+
+def extract_keywords(question: str) -> Dict:
+    """Extract keywords from question"""
+    q = question.lower()
+    
+    # Extract plant names
+    plants = [p["commonName"] for p in PLANTS_DATA if p["commonName"].lower() in q or p["name"].lower() in q]
+    
+    # Extract zones
+    zones = []
+    if "northern" in q or "coastal" in q: zones.append("Northern")
+    if "plateau" in q or "high plateau" in q: zones.append("High Plateau")
+    if "sahara" in q or "southern" in q or "desert" in q: zones.append("Sahara")
+    
+    # Extract traits
+    traits = []
+    for trait in ["drought", "salinity", "disease", "yield", "genome", "rainfall", "temperature"]:
+        if trait in q:
+            traits.append(trait)
+    
+    # Question type
+    qtype = "general"
+    if any(w in q for w in ["best", "recommend"]): qtype = "recommendation"
+    elif any(w in q for w in ["highest", "most", "rank"]): qtype = "ranking"
+    elif any(w in q for w in ["compare", "vs", "difference"]): qtype = "comparison"
+    
+    return {"plants": plants, "zones": zones, "traits": traits, "type": qtype, "original": question}
+
+
+# ========================================
+# INTELLIGENT ANSWER TOOL
 # ========================================
 
 @tool_registry.register(
-    name="get_current_time",
-    description="Get the current date and time",
-    parameters={
-        "type": "object",
-        "properties": {},
-        "required": []
-    }
-)
-def get_current_time() -> str:
-    """Get current time"""
-    from datetime import datetime
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-@tool_registry.register(
-    name="calculate",
-    description="Perform basic mathematical calculations",
+    name="answer_question",
+    description="Answer ANY question about plants, zones, traits using keyword extraction",
     parameters={
         "type": "object",
         "properties": {
-            "expression": {
-                "type": "string",
-                "description": "Mathematical expression to evaluate (e.g., '2 + 2', '10 * 5')"
-            }
+            "question": {"type": "string", "description": "User's question"}
         },
-        "required": ["expression"]
+        "required": ["question"]
     }
 )
-def calculate(expression: str) -> float:
-    """Safe calculator"""
-    try:
-        # Only allow basic math operations for safety
-        allowed_chars = set('0123456789+-*/(). ')
-        if not all(c in allowed_chars for c in expression):
-            return "Error: Invalid characters in expression"
-        
-        result = eval(expression, {"__builtins__": {}})
-        return float(result)
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-
-# ========================================
-# ADD YOUR CUSTOM TOOLS HERE
-# ========================================
-
-# Example template for custom tool:
-"""
-@tool_registry.register(
-    name="your_tool_name",
-    description="What your tool does",
-    parameters={
-        "type": "object",
-        "properties": {
-            "param1": {
-                "type": "string",
-                "description": "Parameter description"
-            }
-        },
-        "required": ["param1"]
-    }
-)
-def your_tool_name(param1: str) -> Any:
-    # Your implementation here
-    return result
-"""
+def answer_question(question: str) -> str:
+    """Intelligently answer questions using keyword-based matching"""
+    kw = extract_keywords(question)
+    q = question.lower()
+    resp = []
+    
+    # PLANT-SPECIFIC QUESTIONS
+    if kw["plants"]:
+        plant = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
+        if plant:
+            resp.append(f"**{plant['commonName']} ({plant['name']}) {plant['icon']}**\n")
+            resp.append(f"- Genome: {plant['genomeSize']:,} Mbp\n")
+            resp.append(f"- Climate: {plant['temperature']}, {plant['rainfall']} rainfall\n")
+            resp.append(f"- Drought: {plant['resistance']['drought']}/10 ({plant['droughtTolerance']})\n")
+            resp.append(f"- Salinity: {plant['resistance']['salinity']}/10\n")
+            resp.append(f"- Yield: {plant['yieldPotential']}/10\n")
+            resp.append(f"- Zone: {plant['optimalZone']}\n")
+    
+    # ZONE-SPECIFIC QUESTIONS
+    elif kw["zones"]:
+        zone = next((z for z in ZONES_DATA if z["name"] == kw["zones"][0]), None)
+        if zone:
+            resp.append(f"**{zone['name']} Zone**\n")
+            resp.append(f"- Rainfall: {zone['rainfall']}\n")
+            resp.append(f"- Temperature: {zone['temperature']}\n")
+            resp.append(f"- Best Plants: {', '.join(zone['bestPlants'])}\n")
+            resp.append(f"- Suitability: {zone['suitability']}/10\n")
+    
+    # RANKING QUESTIONS
+    elif kw["type"] == "ranking":
+        if "drought" in kw["traits"]:
+            sorted_p = sorted(PLANTS_DATA, key=lambda p: p["resistance"]["drought"], reverse=True)
+            resp.append("**Top 3 for Drought Resistance:**\n")
+            for i, p in enumerate(sorted_p[:3], 1):
+                resp.append(f"{i}. {p['commonName']}: {p['resistance']['drought']}/10\n")
+        elif "yield" in kw["traits"]:
+            sorted_p = sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True)
+            resp.append("**Top 3 for Yield:**\n")
+            for i, p in enumerate(sorted_p[:3], 1):
+                resp.append(f"{i}. {p['commonName']}: {p['yieldPotential']}/10\n")
+    
+    # RECOMMENDATION QUESTIONS
+    elif kw["type"] == "recommendation":
+        if "drought" in q or "dry" in q:
+            best = max(PLANTS_DATA, key=lambda p: p["resistance"]["drought"])
+            resp.append(f"**Best for Drought:** {best['commonName']} ({best['resistance']['drought']}/10)\n")
+        elif kw["zones"]:
+            zone = next((z for z in ZONES_DATA if z["name"] == kw["zones"][0]), None)
+            if zone:
+                resp.append(f"**Recommended for {zone['name']}:** {', '.join(zone['bestPlants'])}\n")
+    
+    # TRAIT QUESTIONS
+    elif kw["traits"]:
+        trait = kw["traits"][0]
+        if trait == "drought":
+            resp.append("**Drought Resistance Rankings:**\n")
+            for p in sorted(PLANTS_DATA, key=lambda p: p["resistance"]["drought"], reverse=True):
+                resp.append(f"- {p['commonName']}: {p['resistance']['drought']}/10\n")
+        elif trait == "yield":
+            resp.append("**Yield Potential Rankings:**\n")
+            for p in sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True):
+                resp.append(f"- {p['commonName']}: {p['yieldPotential']}/10\n")
+    
+    # FALLBACK
+    if not resp:
+        resp.append("**Available Plants:**\n")
+        for p in PLANTS_DATA:
+            resp.append(f"- {p['commonName']} ({p['optimalZone']})\n")
+        resp.append("\nAsk me about any plant, zone, or trait!")
+    
+    return "".join(resp)
