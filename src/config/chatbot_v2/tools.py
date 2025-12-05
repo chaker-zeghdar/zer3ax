@@ -104,41 +104,96 @@ ZONES_DATA = [
 # ========================================
 
 def extract_keywords(question: str) -> Dict:
-    """Extract keywords from question"""
+    """Extract keywords from question - works with ANY language and even single words"""
     q = question.lower()
     
-    # Extract plant names (more flexible matching)
+    # Extract plant names (more flexible matching - works with partial names)
     plants = []
     for p in PLANTS_DATA:
-        # Check common name and scientific name
-        if (p["commonName"].lower() in q or 
-            p["name"].lower() in q or
-            any(word in q for word in p["commonName"].lower().split()) or
-            "wheat" in q and "wheat" in p["commonName"].lower() or
-            "barley" in q and p["commonName"] == "Barley" or
-            "corn" in q and p["commonName"] == "Corn" or
-            "sorghum" in q and p["commonName"] == "Sorghum" or
-            "alfalfa" in q and p["commonName"] == "Alfalfa"):
+        common_lower = p["commonName"].lower()
+        name_lower = p["name"].lower()
+        
+        # Match full names or partial words
+        if (common_lower in q or name_lower in q or
+            any(word in q for word in common_lower.split()) or
+            any(word in q for word in name_lower.split())):
             plants.append(p["commonName"])
+            continue
+            
+        # Single word matching for each plant
+        if "wheat" in q or "blé" in q or "قمح" in q:
+            if "wheat" in common_lower:
+                plants.append(p["commonName"])
+        elif "barley" in q or "orge" in q or "شعير" in q:
+            if "barley" in common_lower:
+                plants.append(p["commonName"])
+        elif "corn" in q or "maïs" in q or "ذرة" in q:
+            if "corn" in common_lower:
+                plants.append(p["commonName"])
+        elif "sorghum" in q or "sorgo" in q or "ذرة رفيعة" in q:
+            if "sorghum" in common_lower:
+                plants.append(p["commonName"])
+        elif "alfalfa" in q or "luzerne" in q or "فصة" in q:
+            if "alfalfa" in common_lower:
+                plants.append(p["commonName"])
     
-    # Extract zones
+    # Remove duplicates
+    plants = list(dict.fromkeys(plants))
+    
+    # Extract zones (multi-language)
     zones = []
-    if "northern" in q or "coastal" in q or "north" in q: zones.append("Northern")
-    if "plateau" in q or "high plateau" in q: zones.append("High Plateau")
-    if "sahara" in q or "southern" in q or "desert" in q or "south" in q: zones.append("Sahara")
+    if any(w in q for w in ["northern", "north", "coastal", "nord", "côtier", "شمال"]):
+        zones.append("Northern")
+    if any(w in q for w in ["plateau", "high plateau", "hauts plateaux", "الهضاب"]):
+        zones.append("High Plateau")
+    if any(w in q for w in ["sahara", "southern", "south", "desert", "sud", "صحراء", "جنوب"]):
+        zones.append("Sahara")
     
-    # Extract traits
+    # Extract traits (multi-language)
     traits = []
-    for trait in ["drought", "salinity", "disease", "yield", "genome", "rainfall", "temperature"]:
-        if trait in q:
+    trait_keywords = {
+        "drought": ["drought", "dry", "sécheresse", "sec", "جفاف"],
+        "salinity": ["salinity", "salt", "salinité", "sel", "ملوحة"],
+        "disease": ["disease", "resistance", "maladie", "résistance", "مرض", "مقاومة"],
+        "yield": ["yield", "production", "rendement", "إنتاج"],
+        "genome": ["genome", "génome", "جينوم"],
+        "rainfall": ["rain", "rainfall", "pluie", "précipitation", "أمطار"],
+        "temperature": ["temperature", "temp", "température", "حرارة"]
+    }
+    
+    for trait, keywords in trait_keywords.items():
+        if any(kw in q for kw in keywords):
             traits.append(trait)
     
-    # Question type
+    # Detect question type (multi-language intent detection)
     qtype = "general"
-    if any(w in q for w in ["best", "recommend"]): qtype = "recommendation"
-    elif any(w in q for w in ["highest", "most", "rank"]): qtype = "ranking"
-    elif any(w in q for w in ["compare", "vs", "difference"]): qtype = "comparison"
-    elif any(w in q for w in ["what", "tell", "about", "info"]): qtype = "what"
+    
+    # Recommendation
+    if any(w in q for w in ["best", "recommend", "meilleur", "recommand", "أفضل", "نصح"]):
+        qtype = "recommendation"
+    
+    # Ranking
+    elif any(w in q for w in ["rank", "ranking", "position", "classement", "ترتيب"]):
+        qtype = "ranking"
+    
+    # Comparison
+    elif any(w in q for w in ["compare", "vs", "versus", "comparer", "مقارنة"]):
+        qtype = "comparison"
+    
+    # What/Tell/Info questions
+    elif any(w in q for w in ["what", "tell", "about", "info", "describe", "qu'est", "quoi", "ماذا", "ما هو"]):
+        qtype = "what"
+    
+    # Characteristics
+    elif any(w in q for w in ["characteristic", "trait", "property", "caractéristique", "propriété", "خصائص"]):
+        qtype = "characteristics"
+    
+    # Single word handling - if just a plant name or trait
+    if len(q.split()) <= 2 and (plants or traits or zones):
+        if plants:
+            qtype = "what"  # Single word plant = tell me about it
+        elif traits:
+            qtype = "ranking"  # Single word trait = show rankings
     
     return {"plants": plants, "zones": zones, "traits": traits, "type": qtype, "original": question}
 
@@ -163,6 +218,44 @@ def answer_question(question: str) -> str:
     kw = extract_keywords(question)
     q = question.lower()
     resp = []
+    
+    # SINGLE WORD OR FRAGMENT (just "wheat", "drought", "g", etc.)
+    if len(question.strip().split()) <= 2:
+        # Single plant name
+        if kw["plants"] and not kw["traits"]:
+            plant = next((p for p in PLANTS_DATA if p["commonName"] == kw["plants"][0]), None)
+            if plant:
+                resp.append(f"**{plant['commonName']} {plant['icon']}**\n")
+                resp.append(f"• Drought: {plant['resistance']['drought']}/10\n")
+                resp.append(f"• Yield: {plant['yieldPotential']}/10\n")
+                resp.append(f"• Zone: {plant['optimalZone']}\n")
+                resp.append(f"• Genome: {plant['genomeSize']:,} Mbp\n")
+                return "".join(resp)
+        
+        # Single trait word
+        elif kw["traits"] and not kw["plants"]:
+            trait = kw["traits"][0]
+            if trait == "drought":
+                sorted_p = sorted(PLANTS_DATA, key=lambda p: p["resistance"]["drought"], reverse=True)
+                resp.append("**Drought Resistance:**\n")
+                for i, p in enumerate(sorted_p, 1):
+                    resp.append(f"{i}. {p['commonName']}: {p['resistance']['drought']}/10\n")
+                return "".join(resp)
+            elif trait == "yield":
+                sorted_p = sorted(PLANTS_DATA, key=lambda p: p["yieldPotential"], reverse=True)
+                resp.append("**Yield Potential:**\n")
+                for i, p in enumerate(sorted_p, 1):
+                    resp.append(f"{i}. {p['commonName']}: {p['yieldPotential']}/10\n")
+                return "".join(resp)
+        
+        # Random letters like "g" - show help
+        elif not kw["plants"] and not kw["traits"] and not kw["zones"]:
+            resp.append("I can help with:\n")
+            resp.append("• Just say plant name: 'wheat', 'sorghum'\n")
+            resp.append("• Or trait: 'drought', 'yield'\n")
+            resp.append("• Or ask: 'ranking of sorghum', 'compare wheat barley'\n")
+            resp.append("\nPlants: Wheat, Barley, Corn, Sorghum, Alfalfa")
+            return "".join(resp)
     
     # COMPARISON QUESTIONS (compare X with Y / compare it with X)
     if "compare" in q or "vs" in q or "versus" in q or kw["type"] == "comparison":
