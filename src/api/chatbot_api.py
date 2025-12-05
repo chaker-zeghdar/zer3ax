@@ -27,17 +27,41 @@ from config.chatbot_prompt import chatbot_config, get_response_template
 from config.chatbot_tools import chatbot_tools, execute_tool
 from services.ai_service import GeminiService, get_ai_service
 
+# Try to import Claude service
+try:
+    from services.claude_service import ClaudeChatbotService
+    CLAUDE_AVAILABLE = True
+except ImportError:
+    CLAUDE_AVAILABLE = False
+    print("⚠️  Claude service not available (anthropic package not installed)")
+
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-# Initialize Gemini service
-try:
-    gemini_service = GeminiService()
-    print("✓ Gemini AI service initialized successfully")
-except Exception as e:
-    gemini_service = None
-    print(f"⚠️  Gemini service not available: {e}")
-    print("   Install with: pip install google-generativeai")
+# Initialize AI services (priority order: Claude > Gemini > Fallback)
+claude_service = None
+gemini_service = None
+
+# Try Claude first
+if CLAUDE_AVAILABLE:
+    try:
+        claude_service = ClaudeChatbotService()
+        print("✅ Claude AI service initialized successfully")
+    except Exception as e:
+        print(f"⚠️  Claude service initialization failed: {e}")
+
+# Try Gemini as fallback
+if not claude_service:
+    try:
+        gemini_service = GeminiService()
+        print("✅ Gemini AI service initialized successfully")
+    except Exception as e:
+        gemini_service = None
+        print(f"⚠️  Gemini service not available: {e}")
+        print("   Install with: pip install google-generativeai")
+
+if not claude_service and not gemini_service:
+    print("🟡 Using flexible fallback response system")
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -71,14 +95,22 @@ def chat():
                 "success": False
             }), 400
         
-        # Use flexible chatbot logic (prioritize over Gemini for better data-driven responses)
-        from services.ai_service import simple_chat_response
-        response = simple_chat_response(user_message)
+        # Use flexible chatbot logic (prioritize: Claude > Gemini > Fallback)
+        if claude_service:
+            response = claude_service.chat(user_message, conversation_history)
+            service_name = "Claude AI (Sonnet 4)"
+        elif gemini_service:
+            response = gemini_service.chat(user_message, conversation_history)
+            service_name = "Gemini AI"
+        else:
+            from services.ai_service import simple_chat_response
+            response = simple_chat_response(user_message)
+            service_name = "Flexible Data-Driven Fallback"
         
         return jsonify({
             "response": response,
             "success": True,
-            "service": "Flexible Data-Driven AI"
+            "service": service_name
         })
         
     except Exception as e:
@@ -187,7 +219,9 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "service": "Zer3aZ Chatbot API",
-        "gemini_available": gemini_service is not None
+        "claude_available": claude_service is not None,
+        "gemini_available": gemini_service is not None,
+        "active_service": "Claude AI" if claude_service else "Gemini AI" if gemini_service else "Fallback"
     })
 
 
