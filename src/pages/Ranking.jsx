@@ -82,7 +82,7 @@ const Ranking = () => {
             <option value="all">All Zones</option>
             <option value="northern">Northern</option>
             <option value="plateau">High Plateau</option>
-            <option value="sahara">Sahara</option>
+            <optio value="sahara">Sahara</optio>
             <option value="drought">High Drought Tolerance</option>
           </select>
         </div>

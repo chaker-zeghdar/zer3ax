@@ -308,6 +308,8 @@
     min-width: 100%;
   }
 
+  .filter-group 
+
   .stats {
     flex-direction: column;
     gap: 1rem;
