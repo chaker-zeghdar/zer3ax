@@ -283,7 +283,7 @@ class GeminiService(ChatbotAIService):
     def __init__(self, api_key: Optional[str] = None):
         super().__init__()
         # Use provided API key or from environment
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or "sgamp_user_01KBPX6QYHZX8WAYXGY71TVNRG_b7a405955678c654f4d15786689b630c42a24738bd4ff703f2887c4435122423"
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         
         if not GEMINI_AVAILABLE:
             raise ImportError("google-generativeai not installed. Run: pip install google-generativeai")
