@@ -194,7 +194,48 @@ You have access to:
 - All risks must be clearly communicated""",
 
     # Initial greeting message
-    "initial_greeting": "Hello! I'm your AI Plant Breeding assistant. How can I help you today?",
+    "initial_greeting": """👋 Hello! I'm your **AI Plant Breeding Assistant**. I have comprehensive data on 6 plant species across Algeria's climate zones.
+
+**What I can help you with:**
+
+🌾 **Plant Information**
+• Detailed profiles (genome, traits, resistance)
+• Growth requirements & environmental needs
+• Disease, drought, and salinity resistance
+
+🔍 **Smart Search & Discovery**  
+• Find plants by trait (drought, yield, etc.)
+• Compare any two plants side-by-side
+• Show largest/smallest genomes
+• List by genetic diversity
+
+🎯 **Recommendations**
+• Best plants for your climate zone
+• Drought-resistant crops
+• High-yield varieties
+• Saline soil tolerance
+• Heat/cold adaptation
+
+🧬 **Breeding & Predictions**
+• Hybridization success rates
+• Trait compatibility analysis
+• Historical prediction data
+• Trending species usage
+
+📊 **Data & Statistics**
+• 6 plant species database
+• 3 Algeria climate zones
+• Real-time platform metrics
+
+**Ask me anything!** Examples:
+- "Tell me about Sorghum"
+- "What's best for drought conditions?"
+- "Compare wheat and barley"
+- "I need a plant for the Sahara"
+- "Which has the largest genome?"
+- "Show plants suitable for saline soil"
+
+How can I assist you today? 🌱""",
 
     # Chatbot personality settings
     "personality": {

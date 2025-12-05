@@ -735,8 +735,54 @@ def simple_chat_response(user_message: str) -> str:
             return f"Climate zones:\n{zone_list}"
     
     # 10. HELP/CAPABILITY QUESTIONS
-    if any(word in message_lower for word in ["help", "can you", "what can", "how to use"]):
-        return f"I can help with:\n• Information about {len(COMPREHENSIVE_PLANTS)} plant species\n• Climate zones and suitability\n• Recommendations based on traits (drought, yield, etc.)\n• Plant comparisons\n• Hybridization predictions\n• Statistics and trends\n\nJust ask naturally!"
+    if any(word in message_lower for word in ["help", "can you", "what can", "how to use", "capabilities", "features"]):
+        return f"""🌾 **AI Plant Breeding Assistant - Capabilities**
+
+**🔍 Search & Information:**
+• Get detailed info about any plant: "Tell me about [plant name]"
+• Search by trait: "drought resistant plants", "high yield crops"
+• Zone information: "What grows in the Sahara?"
+• Environmental needs: "Can wheat handle heat?"
+
+**🔄 Comparisons:**
+• Compare any two plants: "Compare wheat and barley"
+• Show differences: "What's better for drought, corn or sorghum?"
+• Zone comparisons: "Northern vs Sahara climate"
+
+**🎯 Recommendations:**
+• Best for traits: "Best plant for drought/yield/disease"
+• Zone-specific: "What should I grow in High Plateau?"
+• Soil-specific: "Plants for saline soil"
+• Climate-specific: "What handles extreme heat?"
+
+**📋 Lists & Rankings:**
+• "Show all plants"
+• "List by genetic diversity"
+• "Which has the largest/smallest genome?"
+• "Show trending species"
+
+**🧬 Breeding & Predictions:**
+• "Predict wheat x barley hybrid"
+• "Recent hybridization results"
+• "Success rate for [plant A] x [plant B]"
+
+**📊 Statistics:**
+• "How many plants in database?"
+• "Show platform statistics"
+• "Most popular species"
+
+**Available Data:**
+• {len(COMPREHENSIVE_PLANTS)} plant species with complete profiles
+• {len(ALGERIA_ZONES)} climate zones (Northern, High Plateau, Sahara)
+• Genome sizes, resistance scores, yield potential
+• Historical predictions & trending data
+
+**Just ask naturally!** I understand questions like:
+- "I need something for dry conditions"
+- "What's the difference between X and Y?"
+- "Looking for high yield in northern zone"
+- "Can you recommend something productive?"
+"""
     
     # 11. GENERAL TRAIT QUESTIONS (no specific plant)
     if trait and not plant:
