@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Card, Input, Button, Typography, Space, Avatar } from 'antd';
 import { SendOutlined, RobotOutlined, UserOutlined } from '@ant-design/icons';
+import chatbotConfig from '../config/chatbot-prompt';
+import chatbotTools from '../config/chatbot-tools';
 import './Chatbot.css';
 
 const { Title, Text } = Typography;
@@ -11,7 +13,7 @@ const Chatbot = () => {
     {
       id: 1,
       type: 'bot',
-      text: 'Hello! I\'m your AI Plant Breeding assistant. How can I help you today?',
+      text: chatbotConfig.initialGreeting,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -28,18 +30,70 @@ const Chatbot = () => {
     };
 
     setMessages([...messages, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
 
-    // Simulate bot response
+    // Process bot response using config and tools
     setTimeout(() => {
+      const response = processUserMessage(currentInput);
       const botMessage = {
         id: messages.length + 2,
         type: 'bot',
-        text: 'Thank you for your message. I\'m here to help with plant breeding predictions, comparisons, and recommendations.',
+        text: response,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, botMessage]);
     }, 1000);
+  };
+
+  // Process user message and generate response
+  const processUserMessage = (message) => {
+    const lowerMessage = message.toLowerCase();
+
+    // Handle plant search queries
+    if (lowerMessage.includes('search') || lowerMessage.includes('find plant')) {
+      const searchTerm = message.replace(/search|find plant|for/gi, '').trim();
+      const results = chatbotTools.searchPlants.execute(searchTerm);
+      
+      if (results.length > 0) {
+        return `I found ${results.length} plant(s) matching "${searchTerm}":\n\n${results.slice(0, 3).map(p => 
+          `• ${p.name} (${p.scientificName}) - ${p.zone} zone`
+        ).join('\n')}`;
+      }
+      return `I couldn't find any plants matching "${searchTerm}". Try searching by common name, scientific name, or zone.`;
+    }
+
+    // Handle zone queries
+    if (lowerMessage.includes('zone') || lowerMessage.includes('northern') || 
+        lowerMessage.includes('plateau') || lowerMessage.includes('sahara')) {
+      let zone = 'Northern';
+      if (lowerMessage.includes('plateau')) zone = 'High Plateau';
+      if (lowerMessage.includes('sahara')) zone = 'Sahara';
+      
+      const stats = chatbotTools.getZoneStatistics.execute(zone);
+      return `${zone} zone has ${stats.plantCount} plants in our database. Common traits include: ${stats.commonTraits.slice(0, 3).map(t => t.trait).join(', ')}.`;
+    }
+
+    // Handle prediction/hybridization queries
+    if (lowerMessage.includes('predict') || lowerMessage.includes('hybrid')) {
+      return chatbotConfig.responseTemplates.hybridizationQuestion.replace(
+        '{response}',
+        'you can use our Predict feature to analyze compatibility between plant species. It considers genetic traits, climate zones, and historical success rates.'
+      );
+    }
+
+    // Handle trait queries
+    if (lowerMessage.includes('trait')) {
+      return 'Traits are genetic characteristics that can be passed to hybrid offspring. Key traits include drought resistance, yield potential, disease resistance, and adaptability to specific climates.';
+    }
+
+    // Handle help/general queries
+    if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+      return chatbotConfig.responseTemplates.generalHelp;
+    }
+
+    // Default fallback response
+    return chatbotConfig.responseTemplates.fallback;
   };
 
   const handleKeyPress = (e) => {
