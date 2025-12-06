@@ -27,6 +27,58 @@ const Predict = () => {
     fetchPlants();
   }, []);
 
+  const generateFakeReasoning = (result) => {
+    if (!result) return [];
+    
+    const reasons = [];
+    const cA = result.plant_a.cluster;
+    const cB = result.plant_b.cluster;
+    const distance = result.distance;
+    
+    // Cluster comparison
+    if (cA === cB) {
+      reasons.push("Both plants belong to the same cluster, indicating overall structural and biological similarity.");
+    } else {
+      reasons.push("The two plants belong to different clusters, indicating biological structural differences.");
+    }
+    
+    // Climate zone
+    if (result.plant_a.climate_zone === result.plant_b.climate_zone) {
+      reasons.push("Both plants are adapted to the same climatic zone, which increases the likelihood of hybridization.");
+    } else {
+      reasons.push("Different climatic zones reduce the likelihood of natural hybridization.");
+    }
+    
+    // Hybridization potential
+    if (result.plant_a.hybridization_score > 0.3 && result.plant_b.hybridization_score > 0.3) {
+      reasons.push("Both plants have a high genetic hybridization potential.");
+    } else if (result.plant_a.hybridization_score < 0.1 && result.plant_b.hybridization_score < 0.1) {
+      reasons.push("Both plants have a very low hybridization potential.");
+    } else {
+      reasons.push("Only one of the plants has a high hybridization potential.");
+    }
+    
+    // Distance analysis
+    if (distance < 1.5) {
+      reasons.push("The biological distance is very small, indicating strong genetic similarity.");
+    } else if (distance < 3) {
+      reasons.push("There is moderate genetic similarity between the two plants.");
+    } else {
+      reasons.push("The biological distance is large, indicating clear genetic differences.");
+    }
+    
+    // Conclusion
+    if (distance < 1.5 && cA === cB && result.plant_a.climate_zone === result.plant_b.climate_zone) {
+      reasons.push("✅ Conclusion: Conditions are ideal for successful natural hybridization.");
+    } else if (distance < 3) {
+      reasons.push("⚠️ Conclusion: Hybridization is possible but moderately stable.");
+    } else {
+      reasons.push("❌ Conclusion: Hybridization is weak and genetically unstable.");
+    }
+    
+    return reasons;
+  };
+
   const handlePredict = async () => {
     if (!plantA || !plantB) return;
     
@@ -69,7 +121,8 @@ const Predict = () => {
         recommendation: result.recommendation,
         distance: result.distance,
         plantADetails: result.plant_a,
-        plantBDetails: result.plant_b
+        plantBDetails: result.plant_b,
+        detailedReasoning: generateFakeReasoning(result)
       };
       
       setPrediction(transformedPrediction);
@@ -282,6 +335,33 @@ const Predict = () => {
                 </p>
               </div>
             </div>
+
+            {/* Detailed Reasoning */}
+            {prediction.detailedReasoning && prediction.detailedReasoning.length > 0 && (
+              <div className="result-section">
+                <h3>Detailed Analysis</h3>
+                <ul style={{ 
+                  listStyle: 'none', 
+                  padding: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}>
+                  {prediction.detailedReasoning.map((reason, index) => (
+                    <li key={index} style={{ 
+                      padding: '0.75rem',
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '6px',
+                      borderLeft: '3px solid var(--primary-green)',
+                      fontSize: '0.95rem',
+                      lineHeight: '1.5'
+                    }}>
+                      {reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </motion.div>
         )}
       </div>

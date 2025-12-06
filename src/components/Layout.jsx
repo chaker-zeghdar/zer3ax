@@ -9,7 +9,8 @@ import {
   EnvironmentOutlined,
   MessageOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  StarOutlined
 } from '@ant-design/icons';
 import './Layout.css';
 
@@ -35,6 +36,11 @@ const AppLayout = ({ children }) => {
       key: '/compare',
       icon: <SwapOutlined />,
       label: 'Compare',
+    },
+    {
+      key: '/recommendations',
+      icon: <StarOutlined />,
+      label: 'Recommendations',
     },
     {
       key: '/ranking',

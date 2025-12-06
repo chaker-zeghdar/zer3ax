@@ -6,6 +6,7 @@ import Compare from './pages/Compare';
 import Ranking from './pages/Ranking';
 import MapView from './pages/MapView';
 import Chatbot from './pages/Chatbot';
+import Recommendations from './pages/Recommendations';
 import './App.css';
 
 
@@ -20,6 +21,7 @@ function App() {
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/map" element={<MapView />} />
           <Route path="/chatbot" element={<Chatbot />} />
+          <Route path="/recommendations" element={<Recommendations />} />
         </Routes>
       </AppLayout>
     </Router>
