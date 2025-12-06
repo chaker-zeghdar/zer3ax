@@ -168,48 +168,69 @@ export const plants = [
 export const algeriaZones = [
   {
     id: 1,
-    name: "Northern / Coastal Zone",
+    name: "Algiers - Northern Coastal",
     color: "#4CAF50",
     climate: {
-      rainfall: "400-800mm",
-      temperature: "10-30°C",
-      humidity: "High"
+      rainfall: "600-900mm",
+      temperature: "12-28°C",
+      humidity: "High (65-80%)"
     },
-    soilType: "Clay-loam, fertile",
-    stressFactors: ["Occasional drought", "High humidity diseases"],
+    soilType: "Clay-loam, rich in organic matter",
+    stressFactors: ["High humidity", "Fungal diseases", "Coastal salinity"],
     bestPlants: [1, 3, 6], // Wheat, Corn, Alfalfa
-    suitabilityScore: 8.5,
-    coordinates: { lat: 36.7, lng: 3.2 }
+    suitabilityScore: 8.7,
+    coordinates: { lat: 36.7525, lng: 3.0420 },
+    suitablePlants: [
+      { name: "Quercus", commonName: "Oak", icon: "🌳", compatibility: 92 },
+      { name: "Olea", commonName: "Olive", icon: "🫒", compatibility: 89 },
+      { name: "Citrus", commonName: "Citrus", icon: "🍊", compatibility: 88 },
+      { name: "Vitis", commonName: "Grape", icon: "🍇", compatibility: 85 },
+      { name: "Ficus", commonName: "Fig", icon: "🌿", compatibility: 83 }
+    ]
   },
   {
     id: 2,
-    name: "High Plateau Zone",
+    name: "Djelfa - High Plateaus",
     color: "#8B4513",
     climate: {
-      rainfall: "200-400mm",
-      temperature: "5-35°C",
-      humidity: "Moderate"
+      rainfall: "250-400mm",
+      temperature: "2-36°C",
+      humidity: "Moderate (40-60%)"
     },
-    soilType: "Sandy-loam, alkaline",
-    stressFactors: ["Cold winters", "Water scarcity", "Salinity"],
+    soilType: "Sandy-clay, alkaline, low organic content",
+    stressFactors: ["Cold winters (-5°C)", "Water scarcity", "High salinity", "Strong winds"],
     bestPlants: [2, 5, 4], // Barley, Durum Wheat, Sorghum
-    suitabilityScore: 7.2,
-    coordinates: { lat: 34.8, lng: 1.5 }
+    suitabilityScore: 6.9,
+    coordinates: { lat: 34.6704, lng: 3.2631 },
+    suitablePlants: [
+      { name: "Artemisia", commonName: "Wormwood", icon: "🌾", compatibility: 87 },
+      { name: "Stipa", commonName: "Feather Grass", icon: "🌾", compatibility: 85 },
+      { name: "Atriplex", commonName: "Saltbush", icon: "🌿", compatibility: 82 },
+      { name: "Pistacia", commonName: "Pistachio", icon: "🥜", compatibility: 79 },
+      { name: "Prunus", commonName: "Almond", icon: "🌸", compatibility: 76 }
+    ]
   },
   {
     id: 3,
-    name: "Southern / Sahara Zone",
+    name: "Tamanrasset - Southern Sahara",
     color: "#D2691E",
     climate: {
-      rainfall: "50-200mm",
-      temperature: "15-45°C",
-      humidity: "Very Low"
+      rainfall: "20-100mm",
+      temperature: "10-48°C",
+      humidity: "Very Low (10-25%)"
     },
-    soilType: "Sandy, poor organic matter",
-    stressFactors: ["Extreme heat", "Severe drought", "Sand storms"],
+    soilType: "Sandy, rocky, minimal organic matter",
+    stressFactors: ["Extreme heat (48°C)", "Severe drought", "Sandstorms", "UV radiation"],
     bestPlants: [4], // Sorghum
-    suitabilityScore: 4.8,
-    coordinates: { lat: 28.5, lng: 2.8 }
+    suitabilityScore: 4.2,
+    coordinates: { lat: 22.7850, lng: 5.5228 },
+    suitablePlants: [
+      { name: "Phoenix", commonName: "Date Palm", icon: "🌴", compatibility: 94 },
+      { name: "Acacia", commonName: "Acacia", icon: "🌳", compatibility: 88 },
+      { name: "Calotropis", commonName: "Desert Milkweed", icon: "🌵", compatibility: 85 },
+      { name: "Ziziphus", commonName: "Jujube", icon: "🌿", compatibility: 81 },
+      { name: "Tamarix", commonName: "Tamarisk", icon: "🌿", compatibility: 78 }
+    ]
   }
 ];
 
